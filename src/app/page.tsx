@@ -8,6 +8,8 @@ import { getHealthAdvisoryAction } from '@/app/actions';
 import type { AdvisoryResult } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { Header } from '@/components/header';
+import { Chatbot } from '@/components/chatbot';
+
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
@@ -76,6 +78,8 @@ export default function Home() {
           </section>}
         </div>
       </main>
+      
+      <Chatbot />
 
       <footer className="py-6 px-4 md:px-8 border-t">
         <div className="container mx-auto text-center text-muted-foreground text-sm">
