@@ -1,5 +1,5 @@
 import type { NewsItem } from '@/types';
-import cheerio from 'cheerio';
+import * as cheerio from 'cheerio';
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 const REDDIT_CLIENT_ID = process.env.REDDIT_CLIENT_ID;
