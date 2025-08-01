@@ -12,7 +12,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell, LabelList } from 'recharts';
 import { getPollutionReductionTipsAction } from '@/app/actions';
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -115,6 +115,16 @@ const AdvisoryTabContent = ({ data }: { data: AdvisoryResult }) => {
         setLoadingTips(false);
     }
   }
+  
+  const CustomLabel = (props: any) => {
+    const { x, y, width, value, payload } = props;
+    const { category } = payload;
+    return (
+      <text x={x + width / 2} y={y} dy={-4} fill="#666" textAnchor="middle" fontSize={12}>
+        {category}
+      </text>
+    );
+  };
 
   return (
     <div className="space-y-8 mt-6">
@@ -170,7 +180,7 @@ const AdvisoryTabContent = ({ data }: { data: AdvisoryResult }) => {
         </CardHeader>
         <CardContent>
           <ChartContainer config={chartConfig} className="w-full h-[250px]">
-            <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 20, left: -10, bottom: 0 }}>
+            <BarChart accessibilityLayer data={chartData} margin={{ top: 30, right: 20, left: -10, bottom: 0 }}>
               <CartesianGrid vertical={false} />
               <XAxis
                 dataKey="date"
@@ -203,6 +213,7 @@ const AdvisoryTabContent = ({ data }: { data: AdvisoryResult }) => {
                 }}
               />
               <Bar dataKey="aqi" radius={8}>
+                <LabelList dataKey="category" position="top" content={<CustomLabel />} />
                 {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
