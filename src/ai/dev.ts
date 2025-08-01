@@ -7,3 +7,4 @@ import '@/ai/flows/chat.ts';
 import '@/ai/flows/generate-pollution-reduction-tips.ts';
 import '@/ai/flows/summarize-news.ts';
 import '@/ai/flows/reverse-geocode.ts';
+import '@/ai/flows/generate-news-title.ts';

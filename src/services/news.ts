@@ -1,5 +1,7 @@
 import type { NewsItem } from '@/types';
 import * as cheerio from 'cheerio';
+import { generateNewsTitle } from '@/ai/flows/generate-news-title';
+
 
 const YOUTUBE_API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
 const REDDIT_CLIENT_ID = process.env.NEXT_PUBLIC_REDDIT_CLIENT_ID;
@@ -53,21 +55,40 @@ async function fetchGoogleNews(city: string): Promise<NewsItem[]> {
         const $ = cheerio.load(html);
 
         const articles: NewsItem[] = [];
-        $('article').slice(0, 5).each((i, el) => {
-            const title = $(el).find('h3').text() || 'No title';
-            const link = $(el).find('a').attr('href');
-            const source = $(el).find('div[data-n-tid]').text() || 'Google News';
+        const articlePromises: Promise<NewsItem | null>[] = [];
 
-            if (title && link) {
-                articles.push({
-                    title,
-                    snippet: $(el).find('span').first().text() || title,
-                    link: `https://news.google.com${link.startsWith('.') ? link.substring(1) : link}`,
-                    source: 'Google News',
-                });
-            }
+        $('article').slice(0, 5).each((i, el) => {
+            const promise = async (): Promise<NewsItem | null> => {
+                let title = $(el).find('h3').text();
+                const link = $(el).find('a').attr('href');
+                const source = $(el).find('div[data-n-tid]').text() || 'Google News';
+                const snippet = $(el).find('span').first().text() || '';
+
+                if (!title && snippet) {
+                    try {
+                        const generated = await generateNewsTitle({ snippet });
+                        title = generated.title;
+                    } catch (genError) {
+                        console.error("Failed to generate news title:", genError);
+                        title = snippet.substring(0, 50) + '...'; // Fallback to snippet
+                    }
+                }
+
+                if (title && link) {
+                    return {
+                        title,
+                        snippet: snippet || title,
+                        link: `https://news.google.com${link.startsWith('.') ? link.substring(1) : link}`,
+                        source: 'Google News',
+                    };
+                }
+                return null;
+            };
+            articlePromises.push(promise());
         });
-        return articles;
+
+        const resolvedArticles = await Promise.all(articlePromises);
+        return resolvedArticles.filter((article): article is NewsItem => article !== null);
     } catch (error) {
         console.error("Failed to fetch Google News:", error);
         return [];
