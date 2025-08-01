@@ -46,7 +46,7 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      age: undefined,
+      age: '' as any,
       location: "",
       healthConditions: "",
       languagePreference: "en",
