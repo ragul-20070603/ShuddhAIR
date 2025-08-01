@@ -4,9 +4,11 @@ import { z } from 'zod';
 import { geocodeCity } from '@/ai/flows/geocode-city';
 import { generateHealthAdvisory } from '@/ai/flows/generate-health-advisory';
 import { getAirQualityData } from '@/services/air-quality';
-import type { AdvisoryResult, HealthFormSchema, Pollutant } from '@/types';
+import type { AdvisoryResult, NewsItem } from '@/types';
 import { chat } from '@/ai/flows/chat';
 import { generatePollutionReductionTips } from '@/ai/flows/generate-pollution-reduction-tips';
+import { getNews } from '@/services/news';
+import { summarizeNews } from '@/ai/flows/summarize-news';
 
 
 const getAqiCategory = (aqi: number): { category: string; color: string } => {
@@ -127,6 +129,42 @@ export async function getPollutionReductionTipsAction(
         return { data: result, error: null };
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to get a response from the chatbot.';
+        return { data: null, error: message };
+    }
+}
+
+const newsSchema = z.object({
+    city: z.string(),
+});
+
+export async function getNewsAction(
+    data: z.infer<typeof newsSchema>
+): Promise<{ data: { newsItems: NewsItem[], summary: string } | null, error: string | null }> {
+    const validation = newsSchema.safeParse(data);
+    if (!validation.success) {
+        return { data: null, error: validation.error.errors.map(e => e.message).join(', ') };
+    }
+
+    try {
+        const newsItems = await getNews(validation.data.city);
+
+        if (newsItems.length === 0) {
+            return { data: { newsItems: [], summary: 'No recent news found for this location.' }, error: null };
+        }
+
+        const summaryResult = await summarizeNews({
+            newsItems: newsItems.map(item => ({
+                title: item.title,
+                snippet: item.snippet,
+                source: item.source,
+            })),
+            location: validation.data.city,
+        });
+
+        return { data: { newsItems, summary: summaryResult.summary }, error: null };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to fetch or summarize news.';
+        console.error("News action error:", message);
         return { data: null, error: message };
     }
 }

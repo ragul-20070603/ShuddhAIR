@@ -49,3 +49,10 @@ export type ChatMessage = {
     from: 'user' | 'bot';
     text: string;
 };
+
+export type NewsItem = {
+    title: string;
+    snippet: string;
+    link: string;
+    source: string;
+};

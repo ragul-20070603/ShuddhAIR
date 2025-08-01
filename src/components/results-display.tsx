@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import type { AdvisoryResult, Pollutant } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Wind, Thermometer, Droplets, Bot, MapPin, Sparkles, Loader2, Lightbulb } from 'lucide-react';
+import { Wind, Thermometer, Droplets, Bot, MapPin, Sparkles, Loader2, Lightbulb, Activity, Newspaper } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,6 +15,8 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { getPollutionReductionTipsAction } from '@/app/actions';
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { NewsFeed } from './news-feed';
 
 const getAqiInfo = (aqi: number): { category: string; color: string; bgColor: string; progressColor: string } => {
   if (aqi <= 50) return { category: 'Good', color: 'text-green-700', bgColor: 'bg-green-100', progressColor: 'stroke-green-500' };
@@ -66,8 +67,8 @@ const PollutantBadge = ({ pollutant }: { pollutant: Pollutant }) => {
     )
 }
 
-export function ResultsDisplay({ data }: { data: AdvisoryResult }) {
-  const { current, forecast, advisory, location, user } = data;
+const AdvisoryTabContent = ({ data }: { data: AdvisoryResult }) => {
+  const { current, forecast, advisory, location } = data;
   const aqiInfo = getAqiInfo(current.aqi);
   const [tips, setTips] = useState<string | null>(null);
   const [loadingTips, setLoadingTips] = useState(false);
@@ -112,15 +113,7 @@ export function ResultsDisplay({ data }: { data: AdvisoryResult }) {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold tracking-tight flex items-center justify-center gap-2">
-            <MapPin className="text-primary"/>
-            Air Quality Report for {location.city}
-        </h2>
-        <p className="text-muted-foreground">Personalized for {user.name}</p>
-      </div>
-
+    <div className="space-y-8 mt-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1 flex flex-col items-center justify-center text-center shadow-md">
            <CardHeader>
@@ -225,6 +218,42 @@ export function ResultsDisplay({ data }: { data: AdvisoryResult }) {
             </CardContent>
         </Card>
        )}
+    </div>
+  )
+};
+
+
+export function ResultsDisplay({ data }: { data: AdvisoryResult }) {
+  const { location, user } = data;
+
+  return (
+    <div className="space-y-8">
+      <div className="text-center">
+        <h2 className="text-3xl font-bold tracking-tight flex items-center justify-center gap-2">
+            <MapPin className="text-primary"/>
+            Air Quality Report for {location.city}
+        </h2>
+        <p className="text-muted-foreground">Personalized for {user.name}</p>
+      </div>
+
+      <Tabs defaultValue="advisory" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="advisory">
+            <Activity className="mr-2"/>
+            Advisory
+          </TabsTrigger>
+          <TabsTrigger value="news">
+            <Newspaper className="mr-2"/>
+            News
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="advisory">
+          <AdvisoryTabContent data={data} />
+        </TabsContent>
+        <TabsContent value="news">
+           <NewsFeed city={location.city} />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
