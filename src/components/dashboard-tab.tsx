@@ -1,12 +1,15 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+'use client';
 
-export function XaiSection() {
+import { useState } from 'react';
+import type { AdvisoryResult } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Bot, Sparkles, Loader2, Lightbulb } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { getPollutionReductionTipsAction } from '@/app/actions';
+import { useToast } from "@/hooks/use-toast";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
+
+const XaiSection = () => {
   return (
     <Card className="shadow-lg">
       <CardHeader>
@@ -58,3 +61,81 @@ export function XaiSection() {
     </Card>
   );
 }
+
+
+export function DashboardTab({ data }: { data: AdvisoryResult }) {
+  const { current, advisory, location } = data;
+  const [tips, setTips] = useState<string | null>(null);
+  const [loadingTips, setLoadingTips] = useState(false);
+  const { toast } = useToast();
+
+  const handleGetTips = async () => {
+    setLoadingTips(true);
+    setTips(null);
+    try {
+        const pollutantsString = current.pollutants.map(p => p.name).join(', ');
+        const res = await getPollutionReductionTipsAction({
+            location: location.city,
+            aqi: current.aqi,
+            pollutants: pollutantsString
+        });
+        if (res.error) {
+            throw new Error(res.error);
+        }
+        setTips(res.data?.tips || 'No tips available at this moment.');
+    } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : "Could not fetch tips.";
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: errorMessage,
+        });
+    } finally {
+        setLoadingTips(false);
+    }
+  }
+  
+  return (
+    <div className="space-y-8">
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Bot className="text-primary"/> AI Health Advisory</CardTitle>
+          <CardDescription>Personalized recommendations based on your profile and current conditions in {location.city}.</CardDescription>
+        </CardHeader>
+        <CardContent className="prose prose-blue dark:prose-invert max-w-none text-base whitespace-pre-wrap">
+          <p>{advisory}</p>
+        </CardContent>
+      </Card>
+
+      <div className="text-center">
+        <Button onClick={handleGetTips} disabled={loadingTips}>
+            {loadingTips ? (
+                <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating Tips...
+                </>
+            ) : (
+                <>
+                    <Lightbulb className="mr-2 h-4 w-4" />
+                    Get Tips to Improve Air Quality
+                </>
+            )}
+        </Button>
+      </div>
+
+       {tips && (
+        <Card className="shadow-md">
+            <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Sparkles className="text-primary"/> Air Pollution Reduction Tips</CardTitle>
+            <CardDescription>Actionable advice for a cleaner environment in {location.city}.</CardDescription>
+            </CardHeader>
+            <CardContent className="prose prose-blue dark:prose-invert max-w-none text-base whitespace-pre-wrap">
+                <p>{tips}</p>
+            </CardContent>
+        </Card>
+       )}
+
+       <XaiSection />
+    </div>
+  )
+};
