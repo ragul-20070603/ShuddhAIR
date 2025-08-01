@@ -24,6 +24,9 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { User, Calendar, MapPin, HeartPulse, Languages, Loader2, Send } from "lucide-react";
 import type { HealthFormSchema } from "@/types";
+import type { User as FirebaseUser } from 'firebase/auth';
+import { useEffect } from "react";
+
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -36,9 +39,10 @@ const formSchema = z.object({
 interface HealthFormProps {
   onSubmit: (data: z.infer<typeof formSchema>) => void;
   loading: boolean;
+  user: FirebaseUser | null;
 }
 
-export function HealthForm({ onSubmit, loading }: HealthFormProps) {
+export function HealthForm({ onSubmit, loading, user }: HealthFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -49,6 +53,14 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
       languagePreference: "en",
     },
   });
+
+  useEffect(() => {
+    if (user) {
+      form.setValue('name', user.displayName || '');
+      // You would fetch other user details like age and health conditions from Firestore here
+    }
+  }, [user, form]);
+
 
   return (
     <Card className="max-w-2xl mx-auto shadow-lg border-2 border-primary/10">

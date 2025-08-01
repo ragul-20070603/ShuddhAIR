@@ -22,7 +22,6 @@ export default function Home() {
   const handleFormSubmit = async (data: any) => {
     setLoading(true);
     setError(null);
-    setResults(null);
     try {
       const res = await getHealthAdvisoryAction(data);
       if (res.error) {
@@ -67,7 +66,7 @@ export default function Home() {
                 Enter your details to receive personalized health recommendations based on the current air quality in your area.
               </p>
             </div>
-            <HealthForm onSubmit={handleFormSubmit} loading={loading} />
+            <HealthForm onSubmit={handleFormSubmit} loading={loading} user={user} />
           </section>
           
           {loading && (
@@ -83,8 +82,8 @@ export default function Home() {
           )}
 
           {error && !loading && (
-              <div className="text-center text-red-500">
-                  <p>There was an error fetching the data. Please try again later.</p>
+              <div className="text-center text-red-500 bg-red-100 p-4 rounded-md">
+                  <p><strong>Error:</strong> {error}</p>
               </div>
           )}
 
