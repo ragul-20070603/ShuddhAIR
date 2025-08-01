@@ -34,6 +34,7 @@ export type AdvisoryResult = {
     };
   };
   forecast: DailyForecast[];
+  modelForecast: DailyForecast[];
   advisory: string;
   location: {
     city: string;

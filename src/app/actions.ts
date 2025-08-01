@@ -10,6 +10,7 @@ import { generatePollutionReductionTips } from '@/ai/flows/generate-pollution-re
 import { getNews } from '@/services/news';
 import { summarizeNews } from '@/ai/flows/summarize-news';
 import { reverseGeocode } from '@/ai/flows/reverse-geocode';
+import { predictAqi } from '@/services/aqi-prediction';
 
 
 const getAqiCategory = (aqi: number): { category: string; color: string } => {
@@ -62,11 +63,20 @@ export async function getHealthAdvisoryAction(
       pollutants: pollutantsString,
     };
 
-    const advisoryResult = await generateHealthAdvisory(advisoryInput);
+    const [advisoryResult, modelForecast] = await Promise.all([
+      generateHealthAdvisory(advisoryInput),
+      predictAqi({
+        currentAqi: airQualityData.current.aqi,
+        weather: airQualityData.current.weather,
+        days: 5,
+        historicalData: airQualityData.forecast,
+      })
+    ]);
     
     const result: AdvisoryResult = {
       ...airQualityData,
       advisory: advisoryResult.healthAdvisory,
+      modelForecast: modelForecast.predictions,
       location: {
         city: location,
         lat: latitude,
