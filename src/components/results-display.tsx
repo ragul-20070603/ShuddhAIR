@@ -6,6 +6,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Wind, Thermometer, Droplets, Bot, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 const getAqiInfo = (aqi: number): { category: string; color: string; bgColor: string; progressColor: string } => {
   if (aqi <= 50) return { category: 'Good', color: 'text-green-700', bgColor: 'bg-green-100', progressColor: 'stroke-green-500' };
@@ -59,6 +65,18 @@ const PollutantBadge = ({ pollutant }: { pollutant: Pollutant }) => {
 export function ResultsDisplay({ data }: { data: AdvisoryResult }) {
   const { current, forecast, advisory, location, user } = data;
   const aqiInfo = getAqiInfo(current.aqi);
+
+  const chartData = forecast.map(day => ({
+    date: day.date,
+    aqi: day.aqi
+  }));
+
+  const chartConfig = {
+    aqi: {
+      label: 'AQI',
+      color: 'hsl(var(--primary))',
+    },
+  };
 
   return (
     <div className="space-y-8">
@@ -121,33 +139,31 @@ export function ResultsDisplay({ data }: { data: AdvisoryResult }) {
           <CardDescription>Predicted air quality for the upcoming days.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-center">AQI</TableHead>
-                <TableHead className="text-center">Recommendation</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {forecast.map((day) => {
-                const dayAqiInfo = getAqiInfo(day.aqi);
-                return (
-                  <TableRow key={day.date}>
-                    <TableCell className="font-medium">{day.date}</TableCell>
-                    <TableCell className={cn("text-center font-bold", dayAqiInfo.color)}>{day.aqi}</TableCell>
-                    <TableCell className="text-center">
-                        <Badge variant="outline" className={cn(dayAqiInfo.color, dayAqiInfo.bgColor, 'border-none')}>
-                            {dayAqiInfo.category}
-                        </Badge>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
+          <ChartContainer config={chartConfig} className="w-full h-[250px]">
+            <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 20, left: -10, bottom: 0 }}>
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                tickMargin={10}
+                axisLine={false}
+              />
+              <YAxis
+                domain={[0, 'dataMax + 50']}
+                allowDataOverflow
+                axisLine={false}
+                tickLine={false}
+                tickMargin={10}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent indicator="dot" />}
+              />
+              <Bar dataKey="aqi" radius={8} />
+            </BarChart>
+          </ChartContainer>
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }
