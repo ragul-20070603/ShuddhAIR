@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { AdvisoryResult } from '@/types';
@@ -31,21 +32,16 @@ export function ForecastTab({ data }: { data: AdvisoryResult }) {
     const info = getAqiInfo(day.aqi);
     return {
         date: day.date,
-        "AQI Forecast": day.aqi,
-        "Model Prediction": day.aqi, // Using official data for model prediction line
+        "Model Prediction": day.aqi,
         fill: info.hex,
         category: info.category,
     }
   });
 
    const chartConfig = {
-    "AQI Forecast": {
-      label: 'AQI Forecast',
-      color: "hsl(var(--primary))",
-    },
     "Model Prediction": {
        label: 'Model Prediction',
-       color: "hsl(var(--accent))",
+       color: "hsl(var(--primary))",
     }
   };
   
@@ -97,16 +93,7 @@ export function ForecastTab({ data }: { data: AdvisoryResult }) {
                       content={<CustomTooltip />}
                   />
                   <Legend content={<ChartLegendContent />} wrapperStyle={{paddingTop: '30px'}}/>
-                  <Bar dataKey="AQI Forecast" radius={8} fill="var(--color-AQI Forecast)" />
-                  <Line 
-                    type="monotone" 
-                    dataKey="Model Prediction" 
-                    stroke="var(--color-Model Prediction)" 
-                    strokeWidth={2} 
-                    strokeDasharray="5 5"
-                    dot={{ r: 4, fill: 'var(--color-Model Prediction)' }}
-                    activeDot={{ r: 6 }}
-                  />
+                  <Bar dataKey="Model Prediction" radius={8} fill="var(--color-Model Prediction)" />
                 </BarChart>
             </ChartContainer>
             </CardContent>
