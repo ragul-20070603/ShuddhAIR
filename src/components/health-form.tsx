@@ -22,7 +22,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { User, Calendar, MapPin, HeartPulse, Languages, Loader2, Send } from "lucide-react";
+import { User, Calendar, MapPin, HeartPulse, Languages, Loader2, Send, Mic, MicOff } from "lucide-react";
+import { useState, useEffect, useRef } from 'react';
+import { useToast } from "@/hooks/use-toast";
 
 
 const formSchema = z.object({
@@ -49,6 +51,67 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
       languagePreference: "en",
     },
   });
+
+  const { toast } = useToast();
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+           toast({
+            variant: "destructive",
+            title: "Microphone Access Denied",
+            description: "Please allow microphone access in your browser settings to use voice input.",
+           });
+        }
+        setIsListening(false);
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        form.setValue('location', transcript, { shouldValidate: true });
+      };
+
+      recognitionRef.current = recognition;
+    } else {
+        recognitionRef.current = null;
+    }
+  }, [form, toast]);
+
+  const handleVoiceInput = () => {
+    if (!recognitionRef.current) {
+      toast({
+        variant: "destructive",
+        title: "Voice Recognition Not Supported",
+        description: "Your browser does not support voice recognition. Please type your location instead.",
+      });
+      return;
+    }
+    
+    if (isListening) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.start();
+    }
+  };
+
 
   return (
     <Card className="max-w-2xl mx-auto shadow-lg border-2 border-primary/10">
@@ -94,9 +157,14 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2"><MapPin size={16}/> Location (City)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. New Delhi" {...field} />
-                  </FormControl>
+                  <div className="flex items-center gap-2">
+                    <FormControl>
+                      <Input placeholder="e.g. New Delhi" {...field} />
+                    </FormControl>
+                    <Button type="button" size="icon" variant={isListening ? "destructive" : "outline"} onClick={handleVoiceInput}>
+                      {isListening ? <MicOff /> : <Mic />}
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
