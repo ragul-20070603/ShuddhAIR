@@ -45,7 +45,7 @@ export default function Home() {
         <div className="container mx-auto flex items-center gap-4">
           <Logo className="h-8 w-8 text-primary" />
           <h1 className="text-2xl font-bold font-headline text-foreground">
-            Shuddh<span className="text-primary">AIR</span> Health
+            ShuddhAI
           </h1>
         </div>
       </header>
@@ -82,7 +82,7 @@ export default function Home() {
 
       <footer className="py-6 px-4 md:px-8 border-t">
         <div className="container mx-auto text-center text-muted-foreground text-sm">
-          <p>&copy; {new Date().getFullYear()} ShuddhAIR Health. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} ShuddhAI. All rights reserved.</p>
           <p className="mt-1">Air quality data is for informational purposes only.</p>
         </div>
       </footer>
