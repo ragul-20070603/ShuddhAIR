@@ -6,6 +6,7 @@ import { generateHealthAdvisory } from '@/ai/flows/generate-health-advisory';
 import { getAirQualityData } from '@/services/air-quality';
 import type { AdvisoryResult, HealthFormSchema, Pollutant } from '@/types';
 import { chat } from '@/ai/flows/chat';
+import { generatePollutionReductionTips } from '@/ai/flows/generate-pollution-reduction-tips';
 
 
 const getAqiCategory = (aqi: number): { category: string; color: string } => {
@@ -100,6 +101,29 @@ export async function chatAction(
 
     try {
         const result = await chat({ message: validation.data.message });
+        return { data: result, error: null };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to get a response from the chatbot.';
+        return { data: null, error: message };
+    }
+}
+
+const tipsSchema = z.object({
+    location: z.string(),
+    aqi: z.number(),
+    pollutants: z.string(),
+});
+
+export async function getPollutionReductionTipsAction(
+    data: z.infer<typeof tipsSchema>
+): Promise<{ data: { tips: string } | null, error: string | null }> {
+    const validation = tipsSchema.safeParse(data);
+    if (!validation.success) {
+        return { data: null, error: validation.error.errors.map(e => e.message).join(', ') };
+    }
+
+    try {
+        const result = await generatePollutionReductionTips(validation.data);
         return { data: result, error: null };
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to get a response from the chatbot.';

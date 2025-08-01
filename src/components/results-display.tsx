@@ -1,17 +1,21 @@
 'use client'
 
+import { useState } from 'react';
 import type { AdvisoryResult, Pollutant } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Wind, Thermometer, Droplets, Bot, MapPin } from 'lucide-react';
+import { Wind, Thermometer, Droplets, Bot, MapPin, Sparkles, Loader2, Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { getPollutionReductionTipsAction } from '@/app/actions';
+import { useToast } from "@/hooks/use-toast";
 
 const getAqiInfo = (aqi: number): { category: string; color: string; bgColor: string; progressColor: string } => {
   if (aqi <= 50) return { category: 'Good', color: 'text-green-700', bgColor: 'bg-green-100', progressColor: 'stroke-green-500' };
@@ -65,6 +69,9 @@ const PollutantBadge = ({ pollutant }: { pollutant: Pollutant }) => {
 export function ResultsDisplay({ data }: { data: AdvisoryResult }) {
   const { current, forecast, advisory, location, user } = data;
   const aqiInfo = getAqiInfo(current.aqi);
+  const [tips, setTips] = useState<string | null>(null);
+  const [loadingTips, setLoadingTips] = useState(false);
+  const { toast } = useToast();
 
   const chartData = forecast.map(day => ({
     date: day.date,
@@ -77,6 +84,32 @@ export function ResultsDisplay({ data }: { data: AdvisoryResult }) {
       color: 'hsl(var(--primary))',
     },
   };
+
+  const handleGetTips = async () => {
+    setLoadingTips(true);
+    setTips(null);
+    try {
+        const pollutantsString = current.pollutants.map(p => p.name).join(', ');
+        const res = await getPollutionReductionTipsAction({
+            location: location.city,
+            aqi: current.aqi,
+            pollutants: pollutantsString
+        });
+        if (res.error) {
+            throw new Error(res.error);
+        }
+        setTips(res.data?.tips || 'No tips available at this moment.');
+    } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : "Could not fetch tips.";
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: errorMessage,
+        });
+    } finally {
+        setLoadingTips(false);
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -133,7 +166,7 @@ export function ResultsDisplay({ data }: { data: AdvisoryResult }) {
         </CardContent>
       </Card>
       
-      <Card className="shadow-md">
+       <Card className="shadow-md">
         <CardHeader>
           <CardTitle>5-Day AQI Forecast</CardTitle>
           <CardDescription>Predicted air quality for the upcoming days.</CardDescription>
@@ -164,6 +197,34 @@ export function ResultsDisplay({ data }: { data: AdvisoryResult }) {
           </ChartContainer>
         </CardContent>
       </Card>
+
+      <div className="text-center">
+        <Button onClick={handleGetTips} disabled={loadingTips}>
+            {loadingTips ? (
+                <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating Tips...
+                </>
+            ) : (
+                <>
+                    <Lightbulb className="mr-2 h-4 w-4" />
+                    Get Tips to Improve Air Quality
+                </>
+            )}
+        </Button>
+      </div>
+
+       {tips && (
+        <Card className="shadow-md">
+            <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Sparkles className="text-primary"/> Air Pollution Reduction Tips</CardTitle>
+            <CardDescription>Actionable advice for a cleaner environment in {location.city}.</CardDescription>
+            </CardHeader>
+            <CardContent className="prose prose-blue max-w-none text-base whitespace-pre-wrap">
+                <p>{tips}</p>
+            </CardContent>
+        </Card>
+       )}
     </div>
   )
 }
