@@ -7,7 +7,6 @@ import { XaiSection } from '@/components/xai-section';
 import { getHealthAdvisoryAction } from '@/app/actions';
 import type { AdvisoryResult } from '@/types';
 import { useToast } from "@/hooks/use-toast";
-import { Chatbot } from '@/components/chatbot';
 import { Header } from '@/components/header';
 
 export default function Home() {
@@ -84,7 +83,6 @@ export default function Home() {
           <p className="mt-1">Air quality data is for informational purposes only.</p>
         </div>
       </footer>
-      <Chatbot />
     </div>
   );
 }
