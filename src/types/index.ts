@@ -5,7 +5,7 @@ export const healthFormSchema = z.object({
   age: z.coerce.number().min(0).max(120),
   location: z.string().min(2, { message: "Location is required." }),
   healthConditions: z.string().optional(),
-  languagePreference: z.enum(['en', 'ta', 'hi']),
+  languagePreference: z.enum(['en', 'ta', 'hi', 'bn', 'te', 'mr']),
 });
 
 export type HealthFormSchema = z.infer<typeof healthFormSchema>;

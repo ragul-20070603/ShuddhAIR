@@ -19,7 +19,7 @@ const GenerateHealthAdvisoryInputSchema = z.object({
   pollutants: z.string().describe('The list of pollutants in the air.'),
   languagePreference: z
     .string()
-    .describe('The preferred language for the health advisory (en, ta, hi, etc.)'),
+    .describe('The preferred language for the health advisory (en, ta, hi, bn, te, mr, etc.)'),
 });
 export type GenerateHealthAdvisoryInput = z.infer<typeof GenerateHealthAdvisoryInputSchema>;
 

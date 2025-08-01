@@ -33,7 +33,7 @@ const formSchema = z.object({
   age: z.coerce.number().min(0, "Age must be a positive number.").max(120, "Age seems a bit high."),
   location: z.string().min(2, { message: "Please enter a city name." }),
   healthConditions: z.string().optional(),
-  languagePreference: z.enum(['en', 'ta', 'hi'], { required_error: "Please select a language."}),
+  languagePreference: z.enum(['en', 'ta', 'hi', 'bn', 'te', 'mr'], { required_error: "Please select a language."}),
 });
 
 interface HealthFormProps {
@@ -264,6 +264,9 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
                       <SelectItem value="en">English</SelectItem>
                       <SelectItem value="ta">Tamil (தமிழ்)</SelectItem>
                       <SelectItem value="hi">Hindi (हिन्दी)</SelectItem>
+                      <SelectItem value="bn">Bengali (বাংলা)</SelectItem>
+                      <SelectItem value="te">Telugu (తెలుగు)</SelectItem>
+                      <SelectItem value="mr">Marathi (मराठी)</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
