@@ -5,6 +5,7 @@ import { geocodeCity } from '@/ai/flows/geocode-city';
 import { generateHealthAdvisory } from '@/ai/flows/generate-health-advisory';
 import { getAirQualityData } from '@/services/air-quality';
 import type { AdvisoryResult, HealthFormSchema, Pollutant } from '@/types';
+import { chat } from '@/ai/flows/chat';
 
 const getAqiCategory = (aqi: number): { category: string; color: string } => {
   if (aqi <= 50) return { category: 'Good', color: 'text-green-500' };
@@ -82,4 +83,25 @@ export async function getHealthAdvisoryAction(
     
     return { data: null, error: message };
   }
+}
+
+const chatSchema = z.object({
+  message: z.string(),
+});
+
+export async function chatAction(
+  data: z.infer<typeof chatSchema>
+): Promise<{ data: { response: string } | null, error: string | null }> {
+    const validation = chatSchema.safeParse(data);
+    if (!validation.success) {
+        return { data: null, error: validation.error.errors.map(e => e.message).join(', ') };
+    }
+
+    try {
+        const result = await chat({ message: validation.data.message });
+        return { data: result, error: null };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to get a response from the chatbot.';
+        return { data: null, error: message };
+    }
 }

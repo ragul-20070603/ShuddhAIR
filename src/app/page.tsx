@@ -8,6 +8,7 @@ import { getHealthAdvisoryAction } from '@/app/actions';
 import type { AdvisoryResult } from '@/types';
 import { Logo } from '@/components/icons/logo';
 import { useToast } from "@/hooks/use-toast";
+import { Chatbot } from '@/components/chatbot';
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
@@ -85,6 +86,7 @@ export default function Home() {
           <p className="mt-1">Air quality data is for informational purposes only.</p>
         </div>
       </footer>
+      <Chatbot />
     </div>
   );
 }

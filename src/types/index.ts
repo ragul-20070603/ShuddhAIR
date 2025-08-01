@@ -44,3 +44,8 @@ export type AdvisoryResult = {
     name: string;
   }
 };
+
+export type ChatMessage = {
+    from: 'user' | 'bot';
+    text: string;
+};
