@@ -13,7 +13,7 @@ import { ForecastTab } from '@/components/forecast-tab';
 import { DashboardTab } from '@/components/dashboard-tab';
 import { SettingsTab } from '@/components/settings-tab';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-
+import Image from 'next/image';
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
@@ -69,7 +69,15 @@ export default function Home() {
                         Enter your details to receive personalized health recommendations based on the current air quality in your area.
                     </p>
                     </div>
-                    <HealthForm onSubmit={handleFormSubmit} loading={loading} />
+                    <div className="grid md:grid-cols-4 gap-8 items-center">
+                      <div className="md:col-span-3">
+                        <HealthForm onSubmit={handleFormSubmit} loading={loading} />
+                      </div>
+                      <div className="hidden md:flex flex-col gap-4">
+                          <Image src="https://placehold.co/200x200.png" alt="doodle of clean air" width={200} height={200} className="rounded-lg shadow-lg" data-ai-hint="clean air doodle" />
+                          <Image src="https://placehold.co/200x200.png" alt="doodle of a healthy planet" width={200} height={200} className="rounded-lg shadow-lg" data-ai-hint="healthy planet" />
+                      </div>
+                    </div>
                      {loading && (
                         <div className="flex justify-center items-center p-8">
                             <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary"></div>
@@ -103,7 +111,7 @@ export default function Home() {
       
       <footer className="py-6 px-4 md:px-8 border-t">
         <div className="container mx-auto text-center text-muted-foreground text-sm">
-          <p>&copy; {new Date().getFullYear()} ShuddhAI. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Shuddh AIR. All rights reserved.</p>
           <p className="mt-1">Air quality data is for informational purposes only.</p>
         </div>
       </footer>

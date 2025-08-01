@@ -10,7 +10,7 @@ export function Header() {
         <div className="flex items-center gap-2 md:gap-4">
           <Logo className="h-8 w-8 text-primary" />
           <h1 className="text-xl md:text-2xl font-bold font-headline text-foreground">
-            ShuddhAI
+            Shuddh AIR
           </h1>
         </div>
         <div className="flex-1 flex justify-center px-4">

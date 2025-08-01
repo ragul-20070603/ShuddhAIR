@@ -5,7 +5,7 @@ import { Chatbot } from '@/components/chatbot';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'ShuddhAI',
+  title: 'Shuddh AIR',
   description: 'Personalized air quality health advisory',
 };
 

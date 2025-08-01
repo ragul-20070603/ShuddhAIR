@@ -33,7 +33,7 @@ export function SettingsTab() {
 
             <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="space-y-1">
-                    <h3 className="font-medium">About ShuddhAI</h3>
+                    <h3 className="font-medium">About Shuddh AIR</h3>
                     <p className="text-sm text-muted-foreground">Learn more about the app's mission and data sources.</p>
                 </div>
                 <Button variant="outline" size="icon"><Info/></Button>
