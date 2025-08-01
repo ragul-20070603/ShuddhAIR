@@ -69,14 +69,8 @@ export default function Home() {
                         Enter your details to receive personalized health recommendations based on the current air quality in your area.
                     </p>
                     </div>
-                    <div className="grid md:grid-cols-4 gap-8 items-center">
-                      <div className="md:col-span-3">
-                        <HealthForm onSubmit={handleFormSubmit} loading={loading} />
-                      </div>
-                      <div className="hidden md:flex flex-col gap-4">
-                          <Image src="https://placehold.co/200x200.png" alt="doodle of clean air" width={200} height={200} className="rounded-lg shadow-lg" data-ai-hint="clean air doodle" />
-                          <Image src="https://placehold.co/200x200.png" alt="doodle of a healthy planet" width={200} height={200} className="rounded-lg shadow-lg" data-ai-hint="healthy planet" />
-                      </div>
+                    <div className="flex justify-center items-center">
+                      <HealthForm onSubmit={handleFormSubmit} loading={loading} />
                     </div>
                      {loading && (
                         <div className="flex justify-center items-center p-8">
