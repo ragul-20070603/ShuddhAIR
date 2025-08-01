@@ -22,9 +22,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { User, Calendar, MapPin, HeartPulse, Languages, Loader2, Send, Mic, MicOff } from "lucide-react";
+import { User, Calendar, MapPin, HeartPulse, Languages, Loader2, Send, Mic, MicOff, LocateFixed } from "lucide-react";
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from "@/hooks/use-toast";
+import { reverseGeocodeAction } from "@/app/actions";
 
 
 const formSchema = z.object({
@@ -54,6 +55,7 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
 
   const { toast } = useToast();
   const [isListening, setIsListening] = useState(false);
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
@@ -112,6 +114,61 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
     }
   };
 
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      toast({
+        variant: 'destructive',
+        title: 'Geolocation Not Supported',
+        description: 'Your browser does not support geolocation.',
+      });
+      return;
+    }
+
+    setIsFetchingLocation(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const result = await reverseGeocodeAction({ latitude, longitude });
+          if (result.error) throw new Error(result.error);
+          if (result.data?.city) {
+            form.setValue('location', result.data.city, { shouldValidate: true });
+            toast({
+                title: "Location Found",
+                description: `Set location to ${result.data.city}.`
+            });
+          } else {
+            throw new Error('Could not determine city from coordinates.');
+          }
+        } catch (e: unknown) {
+          const error = e instanceof Error ? e.message : 'An unknown error occurred.';
+          toast({
+            variant: 'destructive',
+            title: 'Could Not Fetch City',
+            description: error,
+          });
+        } finally {
+          setIsFetchingLocation(false);
+        }
+      },
+      (error) => {
+        let description = 'An unknown error occurred while fetching your location.';
+        if(error.code === error.PERMISSION_DENIED) {
+            description = 'Please allow location access in your browser settings.';
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+            description = 'Location information is unavailable.';
+        }
+        toast({
+          variant: 'destructive',
+          title: 'Location Access Error',
+          description: description,
+        });
+        setIsFetchingLocation(false);
+      }
+    );
+  };
+
 
   return (
     <Card className="max-w-2xl mx-auto shadow-lg border-2 border-primary/10">
@@ -161,7 +218,10 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
                     <FormControl>
                       <Input placeholder="e.g. New Delhi" {...field} />
                     </FormControl>
-                    <Button type="button" size="icon" variant={isListening ? "destructive" : "outline"} onClick={handleVoiceInput}>
+                    <Button type="button" size="icon" variant="outline" onClick={handleGetLocation} disabled={isFetchingLocation}>
+                      {isFetchingLocation ? <Loader2 className="animate-spin" /> : <LocateFixed />}
+                    </Button>
+                    <Button type="button" size="icon" variant={isListening ? "destructive" : "outline"} onClick={handleVoiceInput} disabled={isFetchingLocation}>
                       {isListening ? <MicOff /> : <Mic />}
                     </Button>
                   </div>

@@ -9,6 +9,7 @@ import { chat } from '@/ai/flows/chat';
 import { generatePollutionReductionTips } from '@/ai/flows/generate-pollution-reduction-tips';
 import { getNews } from '@/services/news';
 import { summarizeNews } from '@/ai/flows/summarize-news';
+import { reverseGeocode } from '@/ai/flows/reverse-geocode';
 
 
 const getAqiCategory = (aqi: number): { category: string; color: string } => {
@@ -165,6 +166,28 @@ export async function getNewsAction(
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to fetch or summarize news.';
         console.error("News action error:", message);
+        return { data: null, error: message };
+    }
+}
+
+const reverseGeocodeSchema = z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+});
+
+export async function reverseGeocodeAction(
+    data: z.infer<typeof reverseGeocodeSchema>
+): Promise<{ data: { city: string } | null, error: string | null }> {
+    const validation = reverseGeocodeSchema.safeParse(data);
+    if (!validation.success) {
+        return { data: null, error: validation.error.errors.map(e => e.message).join(', ') };
+    }
+
+    try {
+        const result = await reverseGeocode(validation.data);
+        return { data: result, error: null };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to get city from coordinates.';
         return { data: null, error: message };
     }
 }
