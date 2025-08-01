@@ -12,23 +12,23 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from 'recharts';
 import { getPollutionReductionTipsAction } from '@/app/actions';
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NewsFeed } from './news-feed';
 
-const getAqiInfo = (aqi: number): { category: string; color: string; bgColor: string; progressColor: string } => {
-  if (aqi <= 50) return { category: 'Good', color: 'text-green-700', bgColor: 'bg-green-100', progressColor: 'stroke-green-500' };
-  if (aqi <= 100) return { category: 'Moderate', color: 'text-yellow-700', bgColor: 'bg-yellow-100', progressColor: 'stroke-yellow-500' };
-  if (aqi <= 150) return { category: 'Unhealthy for Sensitive Groups', color: 'text-orange-700', bgColor: 'bg-orange-100', progressColor: 'stroke-orange-500' };
-  if (aqi <= 200) return { category: 'Unhealthy', color: 'text-red-700', bgColor: 'bg-red-100', progressColor: 'stroke-red-500' };
-  if (aqi <= 300) return { category: 'Very Unhealthy', color: 'text-purple-700', bgColor: 'bg-purple-100', progressColor: 'stroke-purple-500' };
-  return { category: 'Hazardous', color: 'text-stone-700', bgColor: 'bg-stone-200', progressColor: 'stroke-stone-500' };
+const getAqiInfo = (aqi: number): { category: string; color: string; bgColor: string; progressColor: string; hex: string } => {
+  if (aqi <= 50) return { category: 'Good', color: 'text-green-700', bgColor: 'bg-green-100', progressColor: 'stroke-green-500', hex: '#22c55e' };
+  if (aqi <= 100) return { category: 'Moderate', color: 'text-yellow-700', bgColor: 'bg-yellow-100', progressColor: 'stroke-yellow-500', hex: '#eab308' };
+  if (aqi <= 150) return { category: 'Unhealthy for Sensitive Groups', color: 'text-orange-700', bgColor: 'bg-orange-100', progressColor: 'stroke-orange-500', hex: '#f97316' };
+  if (aqi <= 200) return { category: 'Unhealthy', color: 'text-red-700', bgColor: 'bg-red-100', progressColor: 'stroke-red-500', hex: '#ef4444' };
+  if (aqi <= 300) return { category: 'Very Unhealthy', color: 'text-purple-700', bgColor: 'bg-purple-100', progressColor: 'stroke-purple-500', hex: '#8b5cf6' };
+  return { category: 'Hazardous', color: 'text-stone-700', bgColor: 'bg-stone-200', progressColor: 'stroke-stone-500', hex: '#78716c' };
 };
 
 const AqiGauge = ({ aqi }: { aqi: number }) => {
-  const { color, bgColor, progressColor } = getAqiInfo(aqi);
+  const { color, progressColor } = getAqiInfo(aqi);
   const circumference = 2 * Math.PI * 40; // r=40
   const aqiClamped = Math.min(aqi, 500);
   const strokeDashoffset = circumference - (aqiClamped / 500) * circumference;
@@ -74,15 +74,19 @@ const AdvisoryTabContent = ({ data }: { data: AdvisoryResult }) => {
   const [loadingTips, setLoadingTips] = useState(false);
   const { toast } = useToast();
 
-  const chartData = forecast.map(day => ({
-    date: day.date,
-    aqi: day.aqi
-  }));
+  const chartData = forecast.map(day => {
+    const info = getAqiInfo(day.aqi);
+    return {
+        date: day.date,
+        aqi: day.aqi,
+        fill: info.hex,
+        category: info.category,
+    }
+  });
 
   const chartConfig = {
     aqi: {
       label: 'AQI',
-      color: 'hsl(var(--primary))',
     },
   };
 
@@ -183,9 +187,26 @@ const AdvisoryTabContent = ({ data }: { data: AdvisoryResult }) => {
               />
               <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent indicator="dot" />}
+                content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        const { color } = getAqiInfo(data.aqi);
+                        return (
+                            <div className="bg-background border shadow-lg rounded-lg p-3">
+                                <p className="font-semibold">{label}</p>
+                                <p className={cn("font-bold", color)}>{`AQI: ${data.aqi}`}</p>
+                                <p className="text-sm text-muted-foreground">{`Category: ${data.category}`}</p>
+                            </div>
+                        );
+                    }
+                    return null;
+                }}
               />
-              <Bar dataKey="aqi" radius={8} />
+              <Bar dataKey="aqi" radius={8}>
+                {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                ))}
+              </Bar>
             </BarChart>
           </ChartContainer>
         </CardContent>
