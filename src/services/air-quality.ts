@@ -1,8 +1,8 @@
 import { addDays, format, fromUnixTime } from 'date-fns';
 import type { Pollutant, DailyForecast, AdvisoryResult } from '@/types';
 
-const AQICN_API_KEY = process.env.AQICN_API_KEY;
-const OPENWEATHERMAP_API_KEY = process.env.OPENWEATHERMAP_API_KEY;
+const AQICN_API_KEY = process.env.NEXT_PUBLIC_AQICN_API_KEY;
+const OPENWEATHERMAP_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
 
 // Map pollutant names from OpenWeather to standard names and units
 const pollutantNameMap: Record<string, { name: string; unit: string }> = {

@@ -1,12 +1,12 @@
 import type { NewsItem } from '@/types';
 import * as cheerio from 'cheerio';
 
-const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
-const REDDIT_CLIENT_ID = process.env.REDDIT_CLIENT_ID;
-const REDDIT_CLIENT_SECRET = process.env.REDDIT_CLIENT_SECRET;
-const REDDIT_USER_AGENT = process.env.REDDIT_USER_AGENT;
-const REDDIT_USERNAME = process.env.REDDIT_USERNAME;
-const REDDIT_PASSWORD = process.env.REDDIT_PASSWORD;
+const YOUTUBE_API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
+const REDDIT_CLIENT_ID = process.env.NEXT_PUBLIC_REDDIT_CLIENT_ID;
+const REDDIT_CLIENT_SECRET = process.env.NEXT_PUBLIC_REDDIT_CLIENT_SECRET;
+const REDDIT_USER_AGENT = process.env.NEXT_PUBLIC_REDDIT_USER_AGENT;
+const REDDIT_USERNAME = process.env.NEXT_PUBLIC_REDDIT_USERNAME;
+const REDDIT_PASSWORD = process.env.NEXT_PUBLIC_REDDIT_PASSWORD;
 
 async function fetchYoutubeNews(city: string): Promise<NewsItem[]> {
     if (!YOUTUBE_API_KEY || YOUTUBE_API_KEY === "YOUR_YOUTUBE_API_KEY") {
