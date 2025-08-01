@@ -13,8 +13,6 @@ import {
 } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, Tooltip, Legend, Line } from 'recharts';
 import { NewsFeed } from './news-feed';
-import { Badge } from './ui/badge';
-import { Target } from 'lucide-react';
 
 const getAqiInfo = (aqi: number): { category: string; color: string; bgColor: string; progressColor: string; hex: string } => {
   if (aqi <= 50) return { category: 'Good', color: 'text-green-700 dark:text-green-300', bgColor: 'bg-green-100 dark:bg-green-900/50', progressColor: 'stroke-green-500', hex: 'hsl(var(--chart-2))' };
@@ -26,21 +24,21 @@ const getAqiInfo = (aqi: number): { category: string; color: string; bgColor: st
 };
 
 export function ForecastTab({ data }: { data: AdvisoryResult }) {
-  const { forecast, modelForecast, location } = data;
+  const { forecast, location } = data;
 
-  const chartData = forecast.map((day, index) => {
+  const chartData = forecast.map((day) => {
     const info = getAqiInfo(day.aqi);
     return {
         date: day.date,
-        "Model Prediction": day.aqi,
+        "AQI Forecast": day.aqi,
         fill: info.hex,
         category: info.category,
     }
   });
 
    const chartConfig = {
-    "Model Prediction": {
-       label: 'Model Prediction',
+    "AQI Forecast": {
+       label: 'AQI Forecast',
        color: "hsl(var(--primary))",
     }
   };
@@ -67,7 +65,7 @@ export function ForecastTab({ data }: { data: AdvisoryResult }) {
         <Card className="shadow-md">
             <CardHeader>
             <CardTitle>5-Day AQI Forecast</CardTitle>
-            <CardDescription>Predicted air quality for {location.city}.</CardDescription>
+            <CardDescription>Air quality forecast for {location.city}.</CardDescription>
             </CardHeader>
             <CardContent>
             <ChartContainer config={chartConfig} className="w-full h-[350px]">
@@ -93,22 +91,10 @@ export function ForecastTab({ data }: { data: AdvisoryResult }) {
                       content={<CustomTooltip />}
                   />
                   <Legend content={<ChartLegendContent />} wrapperStyle={{paddingTop: '30px'}}/>
-                  <Bar dataKey="Model Prediction" radius={8} fill="var(--color-Model Prediction)" />
+                  <Bar dataKey="AQI Forecast" radius={8} fill="var(--color-AQI Forecast)" />
                 </BarChart>
             </ChartContainer>
             </CardContent>
-        </Card>
-        <Card className="shadow-md flex items-center justify-center p-4 bg-secondary">
-          <CardHeader className="flex flex-row items-center gap-4 p-0">
-            <Target className="w-8 h-8 text-primary"/>
-            <div>
-              <CardTitle className="text-lg">Model Accuracy</CardTitle>
-              <CardDescription>Based on historical performance for {location.city}</CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0 pl-6">
-              <Badge variant="outline" className="text-2xl font-bold border-2 border-primary/50 py-2 px-4">98.2%</Badge>
-          </CardContent>
         </Card>
         <NewsFeed city={location.city} />
     </div>
