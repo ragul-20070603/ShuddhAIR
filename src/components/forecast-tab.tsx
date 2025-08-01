@@ -31,7 +31,7 @@ export function ForecastTab({ data }: { data: AdvisoryResult }) {
     const info = getAqiInfo(day.aqi);
     return {
         date: day.date,
-        "Official Forecast": day.aqi,
+        "AQI Forecast": day.aqi,
         "Model Prediction": day.aqi, // Using official data for model prediction line
         fill: info.hex,
         category: info.category,
@@ -39,8 +39,8 @@ export function ForecastTab({ data }: { data: AdvisoryResult }) {
   });
 
    const chartConfig = {
-    "Official Forecast": {
-      label: 'Official Forecast',
+    "AQI Forecast": {
+      label: 'AQI Forecast',
       color: "hsl(var(--primary))",
     },
     "Model Prediction": {
@@ -71,7 +71,7 @@ export function ForecastTab({ data }: { data: AdvisoryResult }) {
         <Card className="shadow-md">
             <CardHeader>
             <CardTitle>5-Day AQI Forecast</CardTitle>
-            <CardDescription>Predicted air quality for {location.city} from official sources and our ML model.</CardDescription>
+            <CardDescription>Predicted air quality for {location.city}.</CardDescription>
             </CardHeader>
             <CardContent>
             <ChartContainer config={chartConfig} className="w-full h-[350px]">
@@ -97,7 +97,7 @@ export function ForecastTab({ data }: { data: AdvisoryResult }) {
                       content={<CustomTooltip />}
                   />
                   <Legend content={<ChartLegendContent />} wrapperStyle={{paddingTop: '30px'}}/>
-                  <Bar dataKey="Official Forecast" radius={8} fill="var(--color-Official Forecast)" />
+                  <Bar dataKey="AQI Forecast" radius={8} fill="var(--color-AQI Forecast)" />
                   <Line 
                     type="monotone" 
                     dataKey="Model Prediction" 
