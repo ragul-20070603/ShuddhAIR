@@ -1,7 +1,6 @@
 import { Logo } from '@/components/icons/logo';
 import { Clock } from '@/components/clock';
 import { LanguageSwitcher } from '@/components/language-switcher';
-import { UserNav } from '@/components/user-nav';
 
 
 export function Header() {
@@ -19,7 +18,6 @@ export function Header() {
         </div>
         <div className="flex items-center gap-4">
           <LanguageSwitcher />
-          <UserNav />
         </div>
       </div>
     </header>
