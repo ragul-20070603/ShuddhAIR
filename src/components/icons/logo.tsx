@@ -58,7 +58,7 @@ export function Logo(props: React.SVGProps<SVGSVGElement>) {
         fill="#006A6A"
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-        fill-rule="evenodd"
+        fillRule="evenodd"
       />
       <path
         d="M71.6238 81.7197C66.5358 82.1517 61.4718 80.1477 57.8718 76.2717"
