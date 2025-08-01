@@ -67,9 +67,15 @@ export default function Home() {
             </section>
           )}
 
-          <section id="xai">
+          {error && !loading && (
+              <div className="text-center text-red-500">
+                  <p>There was an error fetching the data. Please try again later.</p>
+              </div>
+          )}
+
+          {results && <section id="xai">
             <XaiSection />
-          </section>
+          </section>}
         </div>
       </main>
 
