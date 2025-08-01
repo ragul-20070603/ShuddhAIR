@@ -9,8 +9,11 @@ import type { AdvisoryResult } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { Chatbot } from '@/components/chatbot';
 import { Header } from '@/components/header';
+import { redirect } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function Home() {
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<AdvisoryResult | null>(null);
@@ -38,6 +41,18 @@ export default function Home() {
       setLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    redirect('/login');
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

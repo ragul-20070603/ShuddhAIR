@@ -6,6 +6,9 @@ import { generateHealthAdvisory } from '@/ai/flows/generate-health-advisory';
 import { getAirQualityData } from '@/services/air-quality';
 import type { AdvisoryResult, HealthFormSchema, Pollutant } from '@/types';
 import { chat } from '@/ai/flows/chat';
+import { auth, firestore } from '@/lib/firebase-admin';
+import { cookies } from 'next/headers';
+
 
 const getAqiCategory = (aqi: number): { category: string; color: string } => {
   if (aqi <= 50) return { category: 'Good', color: 'text-green-500' };
@@ -104,4 +107,58 @@ export async function chatAction(
         const message = error instanceof Error ? error.message : 'Failed to get a response from the chatbot.';
         return { data: null, error: message };
     }
+}
+
+const signUpSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  name: z.string().min(2),
+  age: z.coerce.number().min(0),
+  healthConditions: z.string().optional(),
+});
+
+export async function signUpAction(data: z.infer<typeof signUpSchema>) {
+  const validation = signUpSchema.safeParse(data);
+  if (!validation.success) {
+    return { error: validation.error.errors.map(e => e.message).join(', ') };
+  }
+
+  const { email, password, name, age, healthConditions } = validation.data;
+  try {
+    const userRecord = await auth.createUser({ email, password });
+    await firestore.collection('users').doc(userRecord.uid).set({
+      name,
+      age,
+      email,
+      healthConditions: healthConditions || "",
+    });
+    return { uid: userRecord.uid };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+const signInSchema = z.object({
+  idToken: z.string(),
+});
+
+export async function signInAction(data: z.infer<typeof signInSchema>) {
+    const validation = signInSchema.safeParse(data);
+    if (!validation.success) {
+        return { error: 'Invalid ID token' };
+    }
+    const { idToken } = validation.data;
+    const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
+    try {
+        const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn });
+        cookies().set('session', sessionCookie, { maxAge: expiresIn, httpOnly: true, secure: true });
+        return { success: true };
+    } catch (error: any) {
+        return { error: error.message };
+    }
+}
+
+export async function signOutAction() {
+    cookies().delete('session');
+    return { success: true };
 }
