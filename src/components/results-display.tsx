@@ -118,6 +118,7 @@ const AdvisoryTabContent = ({ data }: { data: AdvisoryResult }) => {
   
   const CustomLabel = (props: any) => {
     const { x, y, width, value, payload } = props;
+    if (!payload) return null;
     const { category } = payload;
     return (
       <text x={x + width / 2} y={y} dy={-4} fill="#666" textAnchor="middle" fontSize={12}>
