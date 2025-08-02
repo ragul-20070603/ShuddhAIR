@@ -46,128 +46,14 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
     defaultValues: {
       name: "",
       age: '' as any,
-      location: "",
+      location: "Hyderabad",
       healthConditions: "",
       languagePreference: "en",
     },
   });
 
   const { toast } = useToast();
-  const [isListening, setIsListening] = useState(false);
-  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
-  const recognitionRef = useRef<any>(null);
-
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.lang = 'en-US';
-      recognition.interimResults = false;
-
-      recognition.onstart = () => {
-        setIsListening(true);
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognition.onerror = (event) => {
-        console.error('Speech recognition error', event.error);
-        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-           toast({
-            variant: "destructive",
-            title: "Microphone Access Denied",
-            description: "Please allow microphone access in your browser settings to use voice input.",
-           });
-        }
-        setIsListening(false);
-      };
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        form.setValue('location', transcript, { shouldValidate: true });
-      };
-
-      recognitionRef.current = recognition;
-    } else {
-        recognitionRef.current = null;
-    }
-  }, [form, toast]);
-
-  const handleVoiceInput = () => {
-    if (!recognitionRef.current) {
-      toast({
-        variant: "destructive",
-        title: "Voice Recognition Not Supported",
-        description: "Your browser does not support voice recognition. Please type your location instead.",
-      });
-      return;
-    }
-    
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      recognitionRef.current.start();
-    }
-  };
-
-  const handleGetLocation = () => {
-    if (!navigator.geolocation) {
-      toast({
-        variant: 'destructive',
-        title: 'Geolocation Not Supported',
-        description: 'Your browser does not support geolocation.',
-      });
-      return;
-    }
-
-    setIsFetchingLocation(true);
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        try {
-          const result = await reverseGeocodeAction({ latitude, longitude });
-          if (result.error) throw new Error(result.error);
-          if (result.data?.city) {
-            form.setValue('location', result.data.city, { shouldValidate: true });
-            toast({
-                title: "Location Found",
-                description: `Set location to ${result.data.city}.`
-            });
-          } else {
-            throw new Error('Could not determine city from coordinates.');
-          }
-        } catch (e: unknown) {
-          const error = e instanceof Error ? e.message : 'An unknown error occurred.';
-          toast({
-            variant: 'destructive',
-            title: 'Could Not Fetch City',
-            description: error,
-          });
-        } finally {
-          setIsFetchingLocation(false);
-        }
-      },
-      (error) => {
-        let description = 'An unknown error occurred while fetching your location.';
-        if(error.code === error.PERMISSION_DENIED) {
-            description = 'Please allow location access in your browser settings.';
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-            description = 'Location information is unavailable.';
-        }
-        toast({
-          variant: 'destructive',
-          title: 'Location Access Error',
-          description: description,
-        });
-        setIsFetchingLocation(false);
-      }
-    );
-  };
-
+  
   return (
     <Card className="max-w-2xl mx-auto shadow-lg border-2 border-primary/10">
       <CardHeader>
@@ -214,15 +100,16 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
                   <FormLabel className="flex items-center gap-2"><MapPin size={16}/> Location (City)</FormLabel>
                   <div className="flex items-center gap-2">
                     <FormControl>
-                      <Input placeholder="e.g. New Delhi" {...field} />
+                      <Input placeholder="e.g. Hyderabad" {...field} disabled />
                     </FormControl>
-                    <Button type="button" size="icon" variant="outline" onClick={handleGetLocation} disabled={isFetchingLocation}>
-                      {isFetchingLocation ? <Loader2 className="animate-spin" /> : <LocateFixed />}
+                    <Button type="button" size="icon" variant="outline" disabled>
+                      <LocateFixed />
                     </Button>
-                    <Button type="button" size="icon" variant={isListening ? "destructive" : "outline"} onClick={handleVoiceInput} disabled={isFetchingLocation}>
-                      {isListening ? <MicOff /> : <Mic />}
+                    <Button type="button" size="icon" variant={"outline"} disabled>
+                      <Mic />
                     </Button>
                   </div>
+                   <p className="text-xs text-muted-foreground pt-1">Location is fixed to Hyderabad for this demonstration.</p>
                   <FormMessage />
                 </FormItem>
               )}

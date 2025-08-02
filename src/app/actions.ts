@@ -41,10 +41,11 @@ export async function getHealthAdvisoryAction(
     return { data: null, error: validation.error.errors.map(e => e.message).join(', ') };
   }
 
-  const { name, age, location, healthConditions, languagePreference } = validation.data;
+  const { name, age, healthConditions, languagePreference } = validation.data;
+  const location = "Hyderabad";
 
   try {
-    const geocodeResult = IS_DEMO_MODE ? { latitude: 28.6139, longitude: 77.2090 } : await geocodeCity({ city: location });
+    const geocodeResult = IS_DEMO_MODE ? { latitude: 17.3850, longitude: 78.4867 } : await geocodeCity({ city: location });
     const { latitude, longitude } = geocodeResult;
     
     const airQualityData = await getAirQualityData(latitude, longitude);
@@ -66,8 +67,12 @@ export async function getHealthAdvisoryAction(
     };
     
     if (IS_DEMO_MODE) {
-        // In demo mode, return a successful response with mock data.
-        const mockAdvisory = `Hello ${name}. The current Air Quality Index (AQI) in ${location} is ${airQualityData.current.aqi}, which is considered 'Moderate'.\n\nFor your age of ${age}, it's generally safe to be outdoors. However, if you have any respiratory conditions like asthma, you might want to reduce prolonged or heavy exertion. \n\n- Consider wearing a mask if you're sensitive to pollutants.\n- Keep windows closed during peak pollution hours.\n- Stay hydrated and monitor for any symptoms like coughing or shortness of breath.`;
+        const mockAdvisory = `Hello ${name}. Based on the current Air Quality Index (AQI) of ${airQualityData.current.aqi} in ${location}, which is considered 'Moderate', here are some health recommendations for you. Given your age of ${age}, it's generally okay to be outdoors. However, if you have any respiratory conditions like asthma, you may want to limit prolonged or heavy exertion.
+
+Key recommendations:
+- **Monitor Symptoms**: Pay attention to symptoms like coughing or shortness of breath.
+- **Stay Hydrated**: Drink plenty of water throughout the day.
+- **Reduce Exposure**: Consider wearing a mask if you are sensitive to pollutants and close windows during peak pollution hours.`;
         const result: AdvisoryResult = {
             ...airQualityData,
             advisory: mockAdvisory,
@@ -181,16 +186,17 @@ export async function getNewsAction(
     if (!validation.success) {
         return { data: null, error: validation.error.errors.map(e => e.message).join(', ') };
     }
+     const city = "Hyderabad";
 
     try {
-        const newsItems = await getNews(validation.data.city);
+        const newsItems = await getNews(city);
 
         if (newsItems.length === 0) {
             return { data: { newsItems: [], summary: 'No recent news found for this location.' }, error: null };
         }
         
         if (IS_DEMO_MODE) {
-             return { data: { newsItems, summary: `Recent news in ${validation.data.city} highlights ongoing efforts by local authorities to curb industrial emissions. A new policy introduces stricter standards for factories, while citizen-led initiatives are promoting the use of public transport to reduce vehicular pollution.` }, error: null };
+             return { data: { newsItems, summary: `Recent news in ${city} highlights ongoing efforts by local authorities to curb industrial emissions. A new policy introduces stricter standards for factories, while citizen-led initiatives are promoting the use of public transport to reduce vehicular pollution.` }, error: null };
         }
 
         const summaryResult = await summarizeNews({
@@ -199,7 +205,7 @@ export async function getNewsAction(
                 snippet: item.snippet,
                 source: item.source,
             })),
-            location: validation.data.city,
+            location: city,
         });
 
         return { data: { newsItems, summary: summaryResult.summary }, error: null };
@@ -219,7 +225,7 @@ export async function reverseGeocodeAction(
     data: z.infer<typeof reverseGeocodeSchema>
 ): Promise<{ data: { city: string } | null, error: string | null }> {
     if (IS_DEMO_MODE) {
-        return { data: { city: "New Delhi" }, error: null };
+        return { data: { city: "Hyderabad" }, error: null };
     }
     const validation = reverseGeocodeSchema.safeParse(data);
     if (!validation.success) {
@@ -227,8 +233,8 @@ export async function reverseGeocodeAction(
     }
 
     try {
-        const result = await reverseGeocode(validation.data);
-        return { data: result, error: null };
+        // Return Hyderabad regardless of coordinates
+        return { data: { city: "Hyderabad" }, error: null };
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to get city from coordinates.';
         return { data: null, error: message };
