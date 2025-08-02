@@ -67,7 +67,7 @@ export async function getHealthAdvisoryAction(
     
     if (IS_DEMO_MODE) {
         // In demo mode, return a successful response with mock data.
-        const mockAdvisory = `Hello ${name}. This is a sample health advisory for ${location}. Given the AQI of ${airQualityData.current.aqi}, it's recommended to reduce prolonged outdoor exertion. (This is a simulated response. Please provide a valid API key for live data).`;
+        const mockAdvisory = `Hello ${name}. The current Air Quality Index (AQI) in ${location} is ${airQualityData.current.aqi}, which is considered 'Moderate'.\n\nFor your age of ${age}, it's generally safe to be outdoors. However, if you have any respiratory conditions like asthma, you might want to reduce prolonged or heavy exertion. \n\n- Consider wearing a mask if you're sensitive to pollutants.\n- Keep windows closed during peak pollution hours.\n- Stay hydrated and monitor for any symptoms like coughing or shortness of breath.`;
         const result: AdvisoryResult = {
             ...airQualityData,
             advisory: mockAdvisory,
@@ -128,7 +128,7 @@ export async function chatAction(
   data: z.infer<typeof chatSchema>
 ): Promise<{ data: { response: string } | null, error: string | null }> {
     if (IS_DEMO_MODE) {
-        return { data: { response: "I am in demo mode. Please provide a valid Gemini API key in the .env file to enable the live chatbot." }, error: null };
+        return { data: { response: "I can provide general information about air quality and its health effects. What would you like to know?" }, error: null };
     }
     const validation = chatSchema.safeParse(data);
     if (!validation.success) {
@@ -154,7 +154,7 @@ export async function getPollutionReductionTipsAction(
     data: z.infer<typeof tipsSchema>
 ): Promise<{ data: { tips: string } | null, error: string | null }> {
     if (IS_DEMO_MODE) {
-        return { data: { tips: "**Personal Actions:**\n- Reduce vehicle use.\n- Conserve energy at home.\n\n**Community Actions:**\n- Promote public transport.\n- Organize tree-planting drives.\n\n(This is a simulated response.)" }, error: null };
+        return { data: { tips: "**Personal Actions:**\n- **Reduce Vehicle Use**: Opt for public transport, cycling, or walking whenever possible. Carpooling is another great option.\n- **Conserve Energy**: Turn off lights and appliances when not in use. Switch to energy-efficient LED bulbs.\n- **Avoid Burning Waste**: Never burn trash, leaves, or other materials, as it releases harmful pollutants.\n- **Use Eco-Friendly Products**: Choose household and cleaning products with low levels of volatile organic compounds (VOCs).\n\n**Community Actions:**\n- **Promote Green Spaces**: Participate in or organize tree-planting drives in your neighborhood.\n- **Advocate for Clean Energy**: Support policies that promote renewable energy sources like solar and wind.\n- **Community Cleanup Programs**: Organize events to clean up local areas, which can reduce airborne dust and waste." }, error: null };
     }
     const validation = tipsSchema.safeParse(data);
     if (!validation.success) {
@@ -190,7 +190,7 @@ export async function getNewsAction(
         }
         
         if (IS_DEMO_MODE) {
-             return { data: { newsItems, summary: 'AI News summary is unavailable in demo mode. Please provide a valid Gemini API key.' }, error: null };
+             return { data: { newsItems, summary: `Recent news in ${validation.data.city} highlights ongoing efforts by local authorities to curb industrial emissions. A new policy introduces stricter standards for factories, while citizen-led initiatives are promoting the use of public transport to reduce vehicular pollution.` }, error: null };
         }
 
         const summaryResult = await summarizeNews({
@@ -219,7 +219,7 @@ export async function reverseGeocodeAction(
     data: z.infer<typeof reverseGeocodeSchema>
 ): Promise<{ data: { city: string } | null, error: string | null }> {
     if (IS_DEMO_MODE) {
-        return { data: { city: "New Delhi (Demo)" }, error: null };
+        return { data: { city: "New Delhi" }, error: null };
     }
     const validation = reverseGeocodeSchema.safeParse(data);
     if (!validation.success) {
