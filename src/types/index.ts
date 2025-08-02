@@ -6,7 +6,6 @@ export const healthFormSchema = z.object({
   location: z.string().min(2, { message: "Location is required." }),
   healthConditions: z.string().optional(),
   languagePreference: z.enum(['en', 'ta', 'hi', 'bn', 'te', 'mr']),
-  healthReport: z.string().optional(),
 });
 
 export type HealthFormSchema = z.infer<typeof healthFormSchema>;

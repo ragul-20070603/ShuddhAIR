@@ -15,7 +15,6 @@ const GenerateHealthAdvisoryInputSchema = z.object({
   age: z.number().describe('The age of the user.'),
   location: z.string().describe('The location (city) of the user.'),
   healthConditions: z.string().describe('Any personal health conditions of the user.'),
-  healthReportText: z.string().optional().describe('Text extracted from the user\'s uploaded health report.'),
   aqi: z.number().describe('The current Air Quality Index for the user\'s location.'),
   pollutants: z.string().describe('The list of pollutants in the air.'),
   languagePreference: z
@@ -41,8 +40,7 @@ const prompt = ai.definePrompt({
   output: {schema: GenerateHealthAdvisoryOutputSchema},
   prompt: `You are a health advisor specializing in air quality and its impact on health.
 
-  Based on the user's personal information, their health report, and the current air quality conditions, provide personalized health recommendations.
-  If a health report is provided, use it as the primary source for the user's health status, taking precedence over the manually entered health conditions.
+  Based on the user's personal information and the current air quality conditions, provide personalized health recommendations.
   Translate the final advisory to the language specified by the user.
 
   User Information:
@@ -55,13 +53,6 @@ const prompt = ai.definePrompt({
   Air Quality Information:
   - AQI: {{{aqi}}}
   - Pollutants: {{{pollutants}}}
-
-  {{#if healthReportText}}
-  User's Health Report Text (Primary Source):
-  ---
-  {{{healthReportText}}}
-  ---
-  {{/if}}
 
   Provide a detailed and personalized health advisory, considering all the provided information. The health advisory MUST be in the language specified in Language Preference.
   `,

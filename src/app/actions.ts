@@ -11,7 +11,6 @@ import { getNews } from '@/services/news';
 import { summarizeNews } from '@/ai/flows/summarize-news';
 import { reverseGeocode } from '@/ai/flows/reverse-geocode';
 import { predictAqi } from '@/services/aqi-prediction';
-import { extractTextFromHealthReport } from '@/ai/flows/extract-text-from-health-report';
 
 
 const getAqiCategory = (aqi: number): { category: string; color: string } => {
@@ -29,7 +28,6 @@ const healthFormSchema = z.object({
   location: z.string().min(2, { message: "Location is required." }),
   healthConditions: z.string().optional(),
   languagePreference: z.enum(['en', 'ta', 'hi', 'bn', 'te', 'mr']),
-  healthReport: z.string().optional(), // Base64 data URI
 });
 
 
@@ -41,16 +39,9 @@ export async function getHealthAdvisoryAction(
     return { data: null, error: validation.error.errors.map(e => e.message).join(', ') };
   }
 
-  const { name, age, location, healthConditions, languagePreference, healthReport } = validation.data;
+  const { name, age, location, healthConditions, languagePreference } = validation.data;
 
   try {
-    let healthReportText: string | undefined = undefined;
-
-    if (healthReport) {
-        const ocrResult = await extractTextFromHealthReport({ reportDataUri: healthReport });
-        healthReportText = ocrResult.extractedText;
-    }
-
     const geocodeResult = await geocodeCity({ city: location });
     const { latitude, longitude } = geocodeResult;
     
@@ -70,7 +61,6 @@ export async function getHealthAdvisoryAction(
       languagePreference,
       aqi: airQualityData.current.aqi,
       pollutants: pollutantsString,
-      healthReportText,
     };
 
     const [advisoryResult, modelForecast] = await Promise.all([
