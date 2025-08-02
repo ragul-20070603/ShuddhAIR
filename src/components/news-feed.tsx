@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -23,8 +24,8 @@ const SourceIcon = ({ source }: { source: string }) => {
 };
 
 const NewsCard = ({ item }: { item: NewsItem }) => (
-  <a href={item.link} target="_blank" rel="noopener noreferrer" className="block hover:bg-slate-50 transition-colors duration-200 rounded-lg">
-    <Card className="shadow-none border-0">
+  <a href={item.link} target="_blank" rel="noopener noreferrer" className="block hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-200 rounded-lg">
+    <Card className="shadow-none border-0 bg-transparent">
       <CardHeader className="flex flex-row items-start gap-4 space-y-0">
         <SourceIcon source={item.source} />
         <div>
@@ -40,15 +41,15 @@ const NewsCard = ({ item }: { item: NewsItem }) => (
 );
 
 const NewsSkeleton = () => (
-    <div className="space-y-4">
-        <div className="flex items-start gap-4 p-4">
-            <Skeleton className="w-6 h-6" />
+    <div className="space-y-4 p-4 rounded-lg border">
+        <div className="flex items-start gap-4">
+            <Skeleton className="w-6 h-6 rounded-full" />
             <div className="space-y-2 flex-1">
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-3 w-1/4" />
             </div>
         </div>
-        <div className="px-4 space-y-2">
+        <div className="space-y-2">
             <Skeleton className="h-3 w-full" />
             <Skeleton className="h-3 w-5/6" />
         </div>
@@ -68,7 +69,9 @@ export function NewsFeed({ city }: { city: string }) {
       try {
         const result = await getNewsAction({ city });
         if (result.error) {
-          throw new Error(result.error);
+           // This component should not show a toast for data errors, as the action handles fallbacks.
+           // However, if the whole action fails catastrophically, we should note it.
+           console.error("News feed error:", result.error);
         }
         if (result.data) {
           setNews(result.data.newsItems);
@@ -76,13 +79,9 @@ export function NewsFeed({ city }: { city: string }) {
         }
       } catch (e: unknown) {
         const errorMessage = e instanceof Error ? e.message : 'Could not fetch news.';
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: errorMessage,
-        });
         setNews([]);
         setSummary('Failed to load news summary.');
+        console.error(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -93,7 +92,7 @@ export function NewsFeed({ city }: { city: string }) {
 
   return (
     <div className="space-y-6">
-        {loading && (
+        {loading ? (
              <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><Bot className="text-primary"/> AI News Summary</CardTitle>
@@ -104,28 +103,30 @@ export function NewsFeed({ city }: { city: string }) {
                     <Skeleton className="h-4 w-3/4" />
                 </CardContent>
             </Card>
-        )}
-        {!loading && summary && (
+        ) : summary ? (
              <Card className="bg-primary/10 border-primary/20">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg"><Bot className="text-primary"/> AI News Summary for {city}</CardTitle>
                 </CardHeader>
-                <CardContent className="prose prose-sm max-w-none">
+                <CardContent className="prose prose-sm dark:prose-invert max-w-none">
                     <p>{summary}</p>
                 </CardContent>
             </Card>
-        )}
+        ) : null}
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {loading && Array.from({ length: 6 }).map((_, i) => <NewsSkeleton key={i}/>)}
-            {news?.map((item, index) => (
-                <NewsCard key={index} item={item} />
-            ))}
+            {loading ? (
+              Array.from({ length: 6 }).map((_, i) => <NewsSkeleton key={i}/>)
+            ) : news && news.length > 0 ? (
+                news.map((item, index) => (
+                    <NewsCard key={index} item={item} />
+                ))
+            ) : (
+                 <div className="text-center py-10 md:col-span-2 lg:col-span-3">
+                    <p className="text-muted-foreground">No recent news about air quality found for {city}.</p>
+                </div>
+            )}
         </div>
-         {news?.length === 0 && !loading && (
-            <div className="text-center py-10">
-                <p className="text-muted-foreground">No recent news about air quality found for {city}.</p>
-            </div>
-        )}
     </div>
   );
 }

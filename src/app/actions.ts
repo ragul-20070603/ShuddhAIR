@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -63,15 +64,26 @@ export async function getHealthAdvisoryAction(
       pollutants: pollutantsString,
     };
     
-    const [advisoryResult, modelForecast] = await Promise.all([
-      generateHealthAdvisory(advisoryInput),
-      predictAqi({
-        currentAqi: airQualityData.current.aqi,
-        weather: airQualityData.current.weather,
-        days: 5,
-        historicalData: airQualityData.forecast,
-      })
-    ]);
+    let advisoryResult;
+    try {
+        advisoryResult = await generateHealthAdvisory(advisoryInput);
+    } catch(e) {
+        console.error("Failed to generate health advisory:", e);
+        advisoryResult = { healthAdvisory: 'The AI Health Advisory service is currently unavailable. Please check your API key and billing status. In the meantime, based on the current AQI, consider limiting outdoor activities if you are in a sensitive group.' };
+    }
+    
+    let modelForecast;
+    try {
+        modelForecast = await predictAqi({
+            currentAqi: airQualityData.current.aqi,
+            weather: airQualityData.current.weather,
+            days: 5,
+            historicalData: airQualityData.forecast,
+        });
+    } catch(e) {
+        console.error("Failed to get AI forecast:", e);
+        modelForecast = { predictions: [] };
+    }
     
     const result: AdvisoryResult = {
       ...airQualityData,
@@ -90,14 +102,10 @@ export async function getHealthAdvisoryAction(
     return { data: result, error: null };
   } catch (error) {
     console.error(error);
-    const message = error instanceof Error ? error.message : 'Failed to generate health advisory. The location might not be recognized or an AI service error occurred.';
-
-    if (message.includes('fetch failed')) {
-        return { data: null, error: 'Failed to fetch air quality data. Please check your API keys in the .env.local file and ensure they are valid.' };
-    }
+    const message = error instanceof Error ? error.message : 'Failed to generate health advisory. The location might not be recognized or a service error occurred.';
     
-    if(message.includes('API_KEY_SERVICE_BLOCKED') || message.includes('429')) {
-        return { data: null, error: 'The API key is invalid or has exceeded its quota. Please enable billing on your Google Cloud project or provide a new key.' };
+    if (message.includes('fetch failed')) {
+        return { data: null, error: 'Failed to fetch location or air quality data. Please check your internet connection and API keys.' };
     }
     
     return { data: null, error: message };
@@ -120,8 +128,8 @@ export async function chatAction(
         const result = await chat({ message: validation.data.message });
         return { data: result, error: null };
     } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to get a response from the chatbot.';
-        return { data: null, error: message };
+        console.error("Chatbot error:", error);
+        return { data: { response: "I'm sorry, the Health Assistant is currently unavailable. Please try again later." }, error: null };
     }
 }
 
@@ -143,8 +151,8 @@ export async function getPollutionReductionTipsAction(
         const result = await generatePollutionReductionTips(validation.data);
         return { data: result, error: null };
     } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to get a response from the chatbot.';
-        return { data: null, error: message };
+        console.error("Get tips error:", error);
+        return { data: { tips: "Could not generate AI-powered tips at the moment. \n\n**General advice:** To improve air quality, consider using public transport, conserving energy at home, and avoiding burning waste." }, error: null };
     }
 }
 
@@ -163,25 +171,31 @@ export async function getNewsAction(
 
     try {
         const newsItems = await getNews(city);
-
+        
         if (newsItems.length === 0) {
             return { data: { newsItems: [], summary: 'No recent news found for this location.' }, error: null };
         }
         
-        const summaryResult = await summarizeNews({
-            newsItems: newsItems.map(item => ({
-                title: item.title,
-                snippet: item.snippet,
-                source: item.source,
-            })),
-            location: city,
-        });
+        let summaryResult;
+        try {
+            summaryResult = await summarizeNews({
+                newsItems: newsItems.map(item => ({
+                    title: item.title,
+                    snippet: item.snippet,
+                    source: item.source,
+                })),
+                location: city,
+            });
+        } catch(e) {
+            console.error("News summarization error:", e);
+            summaryResult = { summary: 'The AI news summary is currently unavailable. Please browse the articles below for the latest updates.' };
+        }
 
         return { data: { newsItems, summary: summaryResult.summary }, error: null };
     } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to fetch or summarize news.';
+        const message = error instanceof Error ? error.message : 'Failed to fetch news.';
         console.error("News action error:", message);
-        return { data: null, error: message };
+        return { data: { newsItems: [], summary: "Could not fetch news at this time." }, error: null };
     }
 }
 
@@ -203,6 +217,8 @@ export async function reverseGeocodeAction(
         return { data: result, error: null };
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to get city from coordinates.';
-        return { data: null, error: message };
+        // Don't expose this error to the user, as the form can still be used by typing.
+        console.error(message);
+        return { data: null, error: "Could not automatically determine your city. Please type it manually." };
     }
 }
