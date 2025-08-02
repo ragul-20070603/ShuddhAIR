@@ -46,14 +46,81 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
     defaultValues: {
       name: "",
       age: '' as any,
-      location: "Hyderabad",
+      location: "",
       healthConditions: "",
       languagePreference: "en",
     },
   });
 
   const { toast } = useToast();
+  const [isLocating, setIsLocating] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+
+  const handleLocationClick = () => {
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+            const { latitude, longitude } = position.coords;
+            const result = await reverseGeocodeAction({ latitude, longitude });
+            if(result.error) {
+                throw new Error(result.error);
+            }
+            if(result.data) {
+                form.setValue('location', result.data.city, { shouldValidate: true });
+            }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Could not determine your city.";
+            toast({ variant: 'destructive', title: "Location Error", description: message });
+        } finally {
+            setIsLocating(false);
+        }
+      },
+      (error) => {
+        toast({ variant: 'destructive', title: "Location Error", description: "Could not get your location. Please enable location services in your browser." });
+        setIsLocating(false);
+      }
+    );
+  };
   
+    useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.lang = 'en-US';
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        form.setValue('location', transcript, { shouldValidate: true });
+        setIsListening(false);
+      };
+      recognitionRef.current.onerror = (event: any) => {
+        toast({ variant: 'destructive', title: "Speech Error", description: `Error occurred in recognition: ${event.error}`});
+        setIsListening(false);
+      };
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+  }, [form, toast]);
+
+
+  const handleMicClick = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    } else {
+      if (recognitionRef.current) {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } else {
+        toast({ variant: 'destructive', title: "Unsupported", description: "Speech recognition is not supported in your browser."});
+      }
+    }
+  };
+
   return (
     <Card className="max-w-2xl mx-auto shadow-lg border-2 border-primary/10">
       <CardHeader>
@@ -100,16 +167,15 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
                   <FormLabel className="flex items-center gap-2"><MapPin size={16}/> Location (City)</FormLabel>
                   <div className="flex items-center gap-2">
                     <FormControl>
-                      <Input placeholder="e.g. Hyderabad" {...field} disabled />
+                      <Input placeholder="e.g. New York or click the icons" {...field} />
                     </FormControl>
-                    <Button type="button" size="icon" variant="outline" disabled>
-                      <LocateFixed />
+                    <Button type="button" size="icon" variant="outline" onClick={handleLocationClick} disabled={isLocating}>
+                      {isLocating ? <Loader2 className="animate-spin" /> : <LocateFixed />}
                     </Button>
-                    <Button type="button" size="icon" variant={"outline"} disabled>
-                      <Mic />
+                    <Button type="button" size="icon" variant={isListening ? "destructive" : "outline"} onClick={handleMicClick}>
+                      {isListening ? <MicOff /> : <Mic />}
                     </Button>
                   </div>
-                   <p className="text-xs text-muted-foreground pt-1">Location is fixed to Hyderabad for this demonstration.</p>
                   <FormMessage />
                 </FormItem>
               )}

@@ -41,12 +41,11 @@ export async function getHealthAdvisoryAction(
     return { data: null, error: validation.error.errors.map(e => e.message).join(', ') };
   }
 
-  const { name, age, healthConditions, languagePreference } = validation.data;
-  const location = "Hyderabad";
-
+  const { name, age, healthConditions, languagePreference, location } = validation.data;
+  
   try {
-    const geocodeResult = IS_DEMO_MODE ? { latitude: 17.3850, longitude: 78.4867 } : await geocodeCity({ city: location });
-    const { latitude, longitude } = geocodeResult;
+    const latitude = 17.4194688;
+    const longitude = 78.4105472;
     
     const airQualityData = await getAirQualityData(latitude, longitude);
 
@@ -186,7 +185,7 @@ export async function getNewsAction(
     if (!validation.success) {
         return { data: null, error: validation.error.errors.map(e => e.message).join(', ') };
     }
-     const city = "Hyderabad";
+    const { city } = validation.data;
 
     try {
         const newsItems = await getNews(city);
@@ -233,8 +232,8 @@ export async function reverseGeocodeAction(
     }
 
     try {
-        // Return Hyderabad regardless of coordinates
-        return { data: { city: "Hyderabad" }, error: null };
+        const result = await reverseGeocode(validation.data);
+        return { data: result, error: null };
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to get city from coordinates.';
         return { data: null, error: message };
