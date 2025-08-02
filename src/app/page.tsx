@@ -7,13 +7,17 @@ import type { AdvisoryResult } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { Header } from '@/components/header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileInput, HomeIcon, BarChart3, User, Settings } from 'lucide-react';
+import { FileInput, HomeIcon, BarChart3, User, Settings, AlertTriangle } from 'lucide-react';
 import { HomeTab } from '@/components/home-tab';
 import { ForecastTab } from '@/components/forecast-tab';
 import { DashboardTab } from '@/components/dashboard-tab';
 import { SettingsTab } from '@/components/settings-tab';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+
+const IS_DEMO_MODE = !process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY.startsWith('AIzaSy');
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
@@ -69,6 +73,17 @@ export default function Home() {
                         Enter your details to receive personalized health recommendations based on the current air quality in your area.
                     </p>
                     </div>
+
+                    {IS_DEMO_MODE && (
+                      <Alert variant="destructive" className="max-w-2xl mx-auto border-yellow-500/50 text-yellow-600 [&>svg]:text-yellow-600">
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertTitle>Demo Mode Active</AlertTitle>
+                          <AlertDescription>
+                            No valid Gemini API key found. The app is running with simulated AI responses. Please add a valid key to `.env` and link a billing account to your project for live data.
+                          </AlertDescription>
+                      </Alert>
+                    )}
+
                     <div className="flex justify-center items-center">
                       <HealthForm onSubmit={handleFormSubmit} loading={loading} />
                     </div>

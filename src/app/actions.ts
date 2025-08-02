@@ -12,6 +12,8 @@ import { summarizeNews } from '@/ai/flows/summarize-news';
 import { reverseGeocode } from '@/ai/flows/reverse-geocode';
 import { predictAqi } from '@/services/aqi-prediction';
 
+const IS_DEMO_MODE = !process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.startsWith('AIzaSy');
+
 
 const getAqiCategory = (aqi: number): { category: string; color: string } => {
   if (aqi <= 50) return { category: 'Good', color: 'text-green-500' };
@@ -42,7 +44,7 @@ export async function getHealthAdvisoryAction(
   const { name, age, location, healthConditions, languagePreference } = validation.data;
 
   try {
-    const geocodeResult = await geocodeCity({ city: location });
+    const geocodeResult = IS_DEMO_MODE ? { latitude: 28.6139, longitude: 77.2090 } : await geocodeCity({ city: location });
     const { latitude, longitude } = geocodeResult;
     
     const airQualityData = await getAirQualityData(latitude, longitude);
@@ -62,6 +64,20 @@ export async function getHealthAdvisoryAction(
       aqi: airQualityData.current.aqi,
       pollutants: pollutantsString,
     };
+    
+    if (IS_DEMO_MODE) {
+        // In demo mode, return a successful response with mock data.
+        const mockAdvisory = `Hello ${name}. This is a sample health advisory for ${location}. Given the AQI of ${airQualityData.current.aqi}, it's recommended to reduce prolonged outdoor exertion. (This is a simulated response. Please provide a valid API key for live data).`;
+        const result: AdvisoryResult = {
+            ...airQualityData,
+            advisory: mockAdvisory,
+            modelForecast: (await predictAqi({ currentAqi: airQualityData.current.aqi, weather: airQualityData.current.weather, days: 5, historicalData: airQualityData.forecast })).predictions,
+            location: { city: location, lat: latitude, lon: longitude, },
+            user: { name }
+        };
+        return { data: result, error: null };
+    }
+
 
     const [advisoryResult, modelForecast] = await Promise.all([
       generateHealthAdvisory(advisoryInput),
@@ -96,6 +112,10 @@ export async function getHealthAdvisoryAction(
         return { data: null, error: 'Failed to fetch air quality data. Please check your API keys in the .env.local file and ensure they are valid.' };
     }
     
+    if(message.includes('API_KEY_SERVICE_BLOCKED') || message.includes('429')) {
+        return { data: null, error: 'The API key is invalid or has exceeded its quota. Please enable billing on your Google Cloud project or provide a new key.' };
+    }
+    
     return { data: null, error: message };
   }
 }
@@ -107,6 +127,9 @@ const chatSchema = z.object({
 export async function chatAction(
   data: z.infer<typeof chatSchema>
 ): Promise<{ data: { response: string } | null, error: string | null }> {
+    if (IS_DEMO_MODE) {
+        return { data: { response: "I am in demo mode. Please provide a valid Gemini API key in the .env file to enable the live chatbot." }, error: null };
+    }
     const validation = chatSchema.safeParse(data);
     if (!validation.success) {
         return { data: null, error: validation.error.errors.map(e => e.message).join(', ') };
@@ -130,6 +153,9 @@ const tipsSchema = z.object({
 export async function getPollutionReductionTipsAction(
     data: z.infer<typeof tipsSchema>
 ): Promise<{ data: { tips: string } | null, error: string | null }> {
+    if (IS_DEMO_MODE) {
+        return { data: { tips: "**Personal Actions:**\n- Reduce vehicle use.\n- Conserve energy at home.\n\n**Community Actions:**\n- Promote public transport.\n- Organize tree-planting drives.\n\n(This is a simulated response.)" }, error: null };
+    }
     const validation = tipsSchema.safeParse(data);
     if (!validation.success) {
         return { data: null, error: validation.error.errors.map(e => e.message).join(', ') };
@@ -162,6 +188,10 @@ export async function getNewsAction(
         if (newsItems.length === 0) {
             return { data: { newsItems: [], summary: 'No recent news found for this location.' }, error: null };
         }
+        
+        if (IS_DEMO_MODE) {
+             return { data: { newsItems, summary: 'AI News summary is unavailable in demo mode. Please provide a valid Gemini API key.' }, error: null };
+        }
 
         const summaryResult = await summarizeNews({
             newsItems: newsItems.map(item => ({
@@ -188,6 +218,9 @@ const reverseGeocodeSchema = z.object({
 export async function reverseGeocodeAction(
     data: z.infer<typeof reverseGeocodeSchema>
 ): Promise<{ data: { city: string } | null, error: string | null }> {
+    if (IS_DEMO_MODE) {
+        return { data: { city: "New Delhi (Demo)" }, error: null };
+    }
     const validation = reverseGeocodeSchema.safeParse(data);
     if (!validation.success) {
         return { data: null, error: validation.error.errors.map(e => e.message).join(', ') };
