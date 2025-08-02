@@ -22,10 +22,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { User, Calendar, MapPin, HeartPulse, Languages, Loader2, Send, Mic, MicOff, LocateFixed } from "lucide-react";
+import { User, Calendar, MapPin, HeartPulse, Languages, Loader2, Send, Mic, MicOff, LocateFixed, FileJson, X } from "lucide-react";
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { reverseGeocodeAction } from "@/app/actions";
+import * as pdfjs from 'pdf-parse';
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 
 
 const formSchema = z.object({
@@ -34,6 +38,7 @@ const formSchema = z.object({
   location: z.string().min(2, { message: "Please enter a city name." }),
   healthConditions: z.string().optional(),
   languagePreference: z.enum(['en', 'ta', 'hi', 'bn', 'te', 'mr'], { required_error: "Please select a language."}),
+  healthReport: z.string().optional(), // This will be the data URI
 });
 
 interface HealthFormProps {
@@ -56,7 +61,15 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
   const { toast } = useToast();
   const [isListening, setIsListening] = useState(false);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // This is required for pdf-parse to work in some environments.
+    window.pdfjs = pdfjs;
+  }, []);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -169,6 +182,47 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
     );
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > MAX_FILE_SIZE) {
+        toast({ variant: 'destructive', title: 'File too large', description: `Please select a file smaller than ${MAX_FILE_SIZE / 1024 / 1024}MB.`});
+        return;
+    }
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        toast({ variant: 'destructive', title: 'Invalid file type', description: `Please select a JPEG, PNG, or PDF file.`});
+        return;
+    }
+    
+    setSelectedFile(file);
+
+    if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setFilePreview(reader.result as string);
+            form.setValue('healthReport', reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    } else if (file.type === 'application/pdf') {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setFilePreview('pdf');
+            form.setValue('healthReport', reader.result as string);
+        }
+        reader.readAsDataURL(file);
+    }
+  }
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    setFilePreview(null);
+    form.setValue('healthReport', undefined);
+    if(fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
+  }
+
 
   return (
     <Card className="max-w-2xl mx-auto shadow-lg border-2 border-primary/10">
@@ -247,6 +301,39 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
                 </FormItem>
               )}
             />
+
+            <FormItem>
+                <FormLabel className="flex items-center gap-2"><FileJson size={16}/> Upload Health Report (optional)</FormLabel>
+                <FormControl>
+                    <Input 
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                        accept={ALLOWED_FILE_TYPES.join(',')}
+                    />
+                </FormControl>
+                {filePreview && selectedFile && (
+                   <div className="mt-2 p-2 border rounded-md relative">
+                     <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={handleRemoveFile}>
+                        <X size={16}/>
+                     </Button>
+                     <div className="flex items-center gap-3">
+                        {filePreview.startsWith('data:image') ? (
+                           <img src={filePreview} alt="Preview" className="h-16 w-16 object-cover rounded"/>
+                        ) : (
+                           <div className="h-16 w-16 flex items-center justify-center bg-muted rounded">
+                              <FileJson className="h-8 w-8 text-muted-foreground"/>
+                           </div>
+                        )}
+                        <div>
+                           <p className="text-sm font-medium truncate">{selectedFile.name}</p>
+                           <p className="text-xs text-muted-foreground">{(selectedFile.size / 1024).toFixed(2)} KB</p>
+                        </div>
+                     </div>
+                   </div>
+                )}
+            </FormItem>
             
             <FormField
               control={form.control}
