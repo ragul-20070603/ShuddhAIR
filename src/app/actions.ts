@@ -12,8 +12,6 @@ import { summarizeNews } from '@/ai/flows/summarize-news';
 import { reverseGeocode } from '@/ai/flows/reverse-geocode';
 import { predictAqi } from '@/services/aqi-prediction';
 
-const IS_DEMO_MODE = !process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.startsWith('AIzaSy');
-
 
 const getAqiCategory = (aqi: number): { category: string; color: string } => {
   if (aqi <= 50) return { category: 'Good', color: 'text-green-500' };
@@ -44,8 +42,8 @@ export async function getHealthAdvisoryAction(
   const { name, age, healthConditions, languagePreference, location } = validation.data;
   
   try {
-    const latitude = 17.4194688;
-    const longitude = 78.4105472;
+    const geo = await geocodeCity({ city: location });
+    const { latitude, longitude } = geo;
     
     const airQualityData = await getAirQualityData(latitude, longitude);
 
@@ -65,24 +63,6 @@ export async function getHealthAdvisoryAction(
       pollutants: pollutantsString,
     };
     
-    if (IS_DEMO_MODE) {
-        const mockAdvisory = `Hello ${name}. Based on the current Air Quality Index (AQI) of ${airQualityData.current.aqi} in ${location}, which is considered 'Moderate', here are some health recommendations for you. Given your age of ${age}, it's generally okay to be outdoors. However, if you have any respiratory conditions like asthma, you may want to limit prolonged or heavy exertion.
-
-Key recommendations:
-- **Monitor Symptoms**: Pay attention to symptoms like coughing or shortness of breath.
-- **Stay Hydrated**: Drink plenty of water throughout the day.
-- **Reduce Exposure**: Consider wearing a mask if you are sensitive to pollutants and close windows during peak pollution hours.`;
-        const result: AdvisoryResult = {
-            ...airQualityData,
-            advisory: mockAdvisory,
-            modelForecast: (await predictAqi({ currentAqi: airQualityData.current.aqi, weather: airQualityData.current.weather, days: 5, historicalData: airQualityData.forecast })).predictions,
-            location: { city: location, lat: latitude, lon: longitude, },
-            user: { name }
-        };
-        return { data: result, error: null };
-    }
-
-
     const [advisoryResult, modelForecast] = await Promise.all([
       generateHealthAdvisory(advisoryInput),
       predictAqi({
@@ -131,9 +111,6 @@ const chatSchema = z.object({
 export async function chatAction(
   data: z.infer<typeof chatSchema>
 ): Promise<{ data: { response: string } | null, error: string | null }> {
-    if (IS_DEMO_MODE) {
-        return { data: { response: "I can provide general information about air quality and its health effects. What would you like to know?" }, error: null };
-    }
     const validation = chatSchema.safeParse(data);
     if (!validation.success) {
         return { data: null, error: validation.error.errors.map(e => e.message).join(', ') };
@@ -157,9 +134,6 @@ const tipsSchema = z.object({
 export async function getPollutionReductionTipsAction(
     data: z.infer<typeof tipsSchema>
 ): Promise<{ data: { tips: string } | null, error: string | null }> {
-    if (IS_DEMO_MODE) {
-        return { data: { tips: "**Personal Actions:**\n- **Reduce Vehicle Use**: Opt for public transport, cycling, or walking whenever possible. Carpooling is another great option.\n- **Conserve Energy**: Turn off lights and appliances when not in use. Switch to energy-efficient LED bulbs.\n- **Avoid Burning Waste**: Never burn trash, leaves, or other materials, as it releases harmful pollutants.\n- **Use Eco-Friendly Products**: Choose household and cleaning products with low levels of volatile organic compounds (VOCs).\n\n**Community Actions:**\n- **Promote Green Spaces**: Participate in or organize tree-planting drives in your neighborhood.\n- **Advocate for Clean Energy**: Support policies that promote renewable energy sources like solar and wind.\n- **Community Cleanup Programs**: Organize events to clean up local areas, which can reduce airborne dust and waste." }, error: null };
-    }
     const validation = tipsSchema.safeParse(data);
     if (!validation.success) {
         return { data: null, error: validation.error.errors.map(e => e.message).join(', ') };
@@ -194,10 +168,6 @@ export async function getNewsAction(
             return { data: { newsItems: [], summary: 'No recent news found for this location.' }, error: null };
         }
         
-        if (IS_DEMO_MODE) {
-             return { data: { newsItems, summary: `Recent news in ${city} highlights ongoing efforts by local authorities to curb industrial emissions. A new policy introduces stricter standards for factories, while citizen-led initiatives are promoting the use of public transport to reduce vehicular pollution.` }, error: null };
-        }
-
         const summaryResult = await summarizeNews({
             newsItems: newsItems.map(item => ({
                 title: item.title,
@@ -223,9 +193,6 @@ const reverseGeocodeSchema = z.object({
 export async function reverseGeocodeAction(
     data: z.infer<typeof reverseGeocodeSchema>
 ): Promise<{ data: { city: string } | null, error: string | null }> {
-    if (IS_DEMO_MODE) {
-        return { data: { city: "Hyderabad" }, error: null };
-    }
     const validation = reverseGeocodeSchema.safeParse(data);
     if (!validation.success) {
         return { data: null, error: validation.error.errors.map(e => e.message).join(', ') };

@@ -7,17 +7,12 @@ import type { AdvisoryResult } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { Header } from '@/components/header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileInput, HomeIcon, BarChart3, User, Settings, AlertTriangle } from 'lucide-react';
+import { FileInput, HomeIcon, BarChart3, User, Settings } from 'lucide-react';
 import { HomeTab } from '@/components/home-tab';
 import { ForecastTab } from '@/components/forecast-tab';
 import { DashboardTab } from '@/components/dashboard-tab';
 import { SettingsTab } from '@/components/settings-tab';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import Image from 'next/image';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-
-
-const IS_DEMO_MODE = !process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY.startsWith('AIzaSy');
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
