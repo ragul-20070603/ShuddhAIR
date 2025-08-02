@@ -74,16 +74,6 @@ export default function Home() {
                     </p>
                     </div>
 
-                    {IS_DEMO_MODE && (
-                      <Alert variant="destructive" className="max-w-2xl mx-auto border-yellow-500/50 text-yellow-600 [&>svg]:text-yellow-600">
-                          <AlertTriangle className="h-4 w-4" />
-                          <AlertTitle>Demo Mode Active</AlertTitle>
-                          <AlertDescription>
-                            No valid Gemini API key found. The app is running with simulated AI responses. Please add a valid key to `.env` and link a billing account to your project for live data.
-                          </AlertDescription>
-                      </Alert>
-                    )}
-
                     <div className="flex justify-center items-center">
                       <HealthForm onSubmit={handleFormSubmit} loading={loading} />
                     </div>
