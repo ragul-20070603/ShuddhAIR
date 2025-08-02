@@ -42,10 +42,21 @@ export async function getHealthAdvisoryAction(
 
   const { name, age, healthConditions, languagePreference, location } = validation.data;
   
+  let latitude: number;
+  let longitude: number;
+
   try {
     const geo = await geocodeCity({ city: location });
-    const { latitude, longitude } = geo;
+    latitude = geo.latitude;
+    longitude = geo.longitude;
+  } catch (error) {
+    console.error(`Failed to geocode city "${location}". Defaulting to Hyderabad.`, error);
+    // Default to Hyderabad if the city is not found
+    latitude = 17.3850;
+    longitude = 78.4867;
+  }
     
+  try {
     const airQualityData = await getAirQualityData(latitude, longitude);
 
     if (!airQualityData.current) {
@@ -69,7 +80,7 @@ export async function getHealthAdvisoryAction(
         advisoryResult = await generateHealthAdvisory(advisoryInput);
     } catch(e) {
         console.error("Failed to generate health advisory:", e);
-        advisoryResult = { healthAdvisory: 'The AI Health Advisory service is currently unavailable. Please check your API key and billing status. In the meantime, based on the current AQI, consider limiting outdoor activities if you are in a sensitive group.' };
+        advisoryResult = { healthAdvisory: 'The AI Health Advisory service is currently unavailable. Based on the current AQI, consider limiting outdoor activities if you are in a sensitive group. Those with respiratory conditions should be especially careful.' };
     }
     
     let modelForecast;
@@ -102,10 +113,11 @@ export async function getHealthAdvisoryAction(
     return { data: result, error: null };
   } catch (error) {
     console.error(error);
-    const message = error instanceof Error ? error.message : 'Failed to generate health advisory. The location might not be recognized or a service error occurred.';
+    // This top-level catch is for truly unexpected errors, like network failures with the AQI/Weather APIs.
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred while fetching air quality data.';
     
     if (message.includes('fetch failed')) {
-        return { data: null, error: 'Failed to fetch location or air quality data. Please check your internet connection and API keys.' };
+        return { data: null, error: 'Failed to fetch air quality data. Please check your internet connection and API keys.' };
     }
     
     return { data: null, error: message };
