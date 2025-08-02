@@ -26,7 +26,6 @@ import { User, Calendar, MapPin, HeartPulse, Languages, Loader2, Send, Mic, MicO
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { reverseGeocodeAction } from "@/app/actions";
-import * as pdfjs from 'pdf-parse';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
@@ -65,11 +64,6 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    // This is required for pdf-parse to work in some environments.
-    window.pdfjs = pdfjs;
-  }, []);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -197,21 +191,16 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
     
     setSelectedFile(file);
 
-    if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+        if (file.type.startsWith('image/')) {
             setFilePreview(reader.result as string);
-            form.setValue('healthReport', reader.result as string);
-        };
-        reader.readAsDataURL(file);
-    } else if (file.type === 'application/pdf') {
-        const reader = new FileReader();
-        reader.onloadend = () => {
+        } else if (file.type === 'application/pdf') {
             setFilePreview('pdf');
-            form.setValue('healthReport', reader.result as string);
         }
-        reader.readAsDataURL(file);
-    }
+        form.setValue('healthReport', reader.result as string);
+    };
+    reader.readAsDataURL(file);
   }
 
   const handleRemoveFile = () => {
