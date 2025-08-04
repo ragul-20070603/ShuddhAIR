@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -56,9 +57,39 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
   const [isLocating, setIsLocating] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    // This effect runs only on the client, ensuring window is defined.
+    setIsClient(true);
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.lang = 'en-US';
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        form.setValue('location', transcript, { shouldValidate: true });
+        setIsListening(false);
+      };
+      recognitionRef.current.onerror = (event: any) => {
+        toast({ variant: 'destructive', title: "Speech Error", description: `Error occurred in recognition: ${event.error}`});
+        setIsListening(false);
+      };
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+  }, [form, toast]);
 
 
   const handleLocationClick = () => {
+    if (!navigator.geolocation) {
+        toast({ variant: 'destructive', title: "Unsupported", description: "Geolocation is not supported by your browser." });
+        return;
+    }
+    
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -85,27 +116,6 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
     );
   };
   
-    useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.lang = 'en-US';
-      recognitionRef.current.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        form.setValue('location', transcript, { shouldValidate: true });
-        setIsListening(false);
-      };
-      recognitionRef.current.onerror = (event: any) => {
-        toast({ variant: 'destructive', title: "Speech Error", description: `Error occurred in recognition: ${event.error}`});
-        setIsListening(false);
-      };
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
-    }
-  }, [form, toast]);
-
 
   const handleMicClick = () => {
     if (isListening) {
@@ -169,12 +179,16 @@ export function HealthForm({ onSubmit, loading }: HealthFormProps) {
                     <FormControl>
                       <Input placeholder="e.g. New York or click the icons" {...field} />
                     </FormControl>
-                    <Button type="button" size="icon" variant="outline" onClick={handleLocationClick} disabled={isLocating}>
-                      {isLocating ? <Loader2 className="animate-spin" /> : <LocateFixed />}
-                    </Button>
-                    <Button type="button" size="icon" variant={isListening ? "destructive" : "outline"} onClick={handleMicClick}>
-                      {isListening ? <MicOff /> : <Mic />}
-                    </Button>
+                    {isClient && (
+                      <>
+                        <Button type="button" size="icon" variant="outline" onClick={handleLocationClick} disabled={isLocating}>
+                          {isLocating ? <Loader2 className="animate-spin" /> : <LocateFixed />}
+                        </Button>
+                        <Button type="button" size="icon" variant={isListening ? "destructive" : "outline"} onClick={handleMicClick}>
+                          {isListening ? <MicOff /> : <Mic />}
+                        </Button>
+                      </>
+                    )}
                   </div>
                   <FormMessage />
                 </FormItem>

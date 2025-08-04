@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { HealthForm } from '@/components/health-form';
 import { getHealthAdvisoryAction } from '@/app/actions';
 import type { AdvisoryResult } from '@/types';
@@ -20,6 +21,11 @@ export default function Home() {
   const [results, setResults] = useState<AdvisoryResult | null>(null);
   const [activeTab, setActiveTab] = useState('input');
   const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleFormSubmit = async (data: any) => {
     setLoading(true);
@@ -45,6 +51,24 @@ export default function Home() {
       setLoading(false);
     }
   };
+
+  if (!isClient) {
+    return (
+       <div className="min-h-screen flex flex-col bg-background">
+         <Header />
+         <div className="flex-grow container mx-auto p-4 md:p-8 flex justify-center items-center">
+            <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary"></div>
+         </div>
+         <footer className="py-6 px-4 md:px-8 border-t">
+          <div className="container mx-auto text-center text-muted-foreground text-sm">
+            <p>&copy; {new Date().getFullYear()} Shuddh AIR. All rights reserved.</p>
+            <p className="mt-1">Air quality data is for informational purposes only.</p>
+          </div>
+        </footer>
+       </div>
+    );
+  }
+
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
