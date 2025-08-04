@@ -8,7 +8,7 @@ import type { AdvisoryResult } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { Header } from '@/components/header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileInput, HomeIcon, BarChart3, User, Settings } from 'lucide-react';
+import { FileInput, Home as HomeIcon, BarChart3, User, Settings } from 'lucide-react';
 import { HomeTab } from '@/components/home-tab';
 import { ForecastTab } from '@/components/forecast-tab';
 import { DashboardTab } from '@/components/dashboard-tab';
