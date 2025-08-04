@@ -5,8 +5,11 @@ import { useState, useEffect } from 'react';
 export function Clock() {
   const [time, setTime] = useState('');
   const [date, setDate] = useState('');
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
+
     const updateDateTime = () => {
         const now = new Date();
         setTime(now.toLocaleTimeString());
@@ -33,10 +36,23 @@ export function Clock() {
     };
   }, []);
 
+  if (!isClient) {
+    return (
+        <div className="text-center">
+            <div className="text-sm md:text-base font-semibold text-foreground tabular-nums">
+                <span className="text-muted-foreground">Loading...</span>
+            </div>
+            <div className="text-xs text-muted-foreground">
+                &nbsp;
+            </div>
+        </div>
+    );
+  }
+
   return (
     <div className="text-center">
       <div className="text-sm md:text-base font-semibold text-foreground tabular-nums">
-        {time || <span className="text-muted-foreground">Loading...</span>}
+        {time}
       </div>
       <div className="text-xs text-muted-foreground">
         {date}
